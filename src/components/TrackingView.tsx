@@ -3,22 +3,28 @@
 import React, { useState } from 'react';
 import {
   Search,
-  Building,
+  Building2,
   Mail,
-  Calendar,
   Eye,
-  CheckCircle2,
-  Clock,
-  XCircle,
-  MessageSquare,
-  Award,
+  X,
+  FileSearch,
 } from 'lucide-react';
 import { Application, ApplicationStatus } from '@/types';
+import { PageHeader, EmptyState, StatusBadge } from '@/components/ui';
 
 interface TrackingViewProps {
   applications: Application[];
   onUpdateStatus: (id: string, status: ApplicationStatus, notes?: string) => void;
 }
+
+const STATUS_OPTIONS: { value: ApplicationStatus; label: string }[] = [
+  { value: 'menunggu_persetujuan', label: 'Menunggu Approval' },
+  { value: 'terkirim', label: 'Terkirim' },
+  { value: 'dibalas', label: 'Dibalas HRD' },
+  { value: 'wawancara', label: 'Wawancara' },
+  { value: 'diterima', label: 'Diterima' },
+  { value: 'ditolak', label: 'Ditolak' },
+];
 
 export const TrackingView: React.FC<TrackingViewProps> = ({
   applications,
@@ -30,7 +36,7 @@ export const TrackingView: React.FC<TrackingViewProps> = ({
 
   const statusFilters = [
     { id: 'all', label: 'Semua' },
-    { id: 'menunggu_persetujuan', label: 'Menunggu Review' },
+    { id: 'menunggu_persetujuan', label: 'Menunggu' },
     { id: 'terkirim', label: 'Terkirim' },
     { id: 'dibalas', label: 'Dibalas' },
     { id: 'wawancara', label: 'Wawancara' },
@@ -40,261 +46,152 @@ export const TrackingView: React.FC<TrackingViewProps> = ({
 
   const filteredApps = applications.filter((app) => {
     const matchStatus = filterStatus === 'all' || app.status === filterStatus;
+    const q = searchQuery.toLowerCase();
     const matchSearch =
-      app.jobTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.recipientEmail.toLowerCase().includes(searchQuery.toLowerCase());
+      app.jobTitle.toLowerCase().includes(q) ||
+      app.company.toLowerCase().includes(q) ||
+      app.recipientEmail.toLowerCase().includes(q);
     return matchStatus && matchSearch;
   });
 
-  const getStatusBadge = (status: ApplicationStatus) => {
-    switch (status) {
-      case 'terkirim':
-        return (
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-success-50 text-success-700 border border-success-200">
-            <CheckCircle2 size={12} />
-            <span>Terkirim</span>
-          </span>
-        );
-      case 'menunggu_persetujuan':
-        return (
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-warning-50 text-warning-700 border border-warning-200">
-            <Clock size={12} />
-            <span>Menunggu Approval</span>
-          </span>
-        );
-      case 'dibalas':
-        return (
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-            <MessageSquare size={12} />
-            <span>Dibalas HRD</span>
-          </span>
-        );
-      case 'wawancara':
-        return (
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-            <Calendar size={12} />
-            <span>Tahap Wawancara</span>
-          </span>
-        );
-      case 'diterima':
-        return (
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300">
-            <Award size={12} />
-            <span>Diterima Kerja</span>
-          </span>
-        );
-      case 'ditolak':
-        return (
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-300">
-            <XCircle size={12} />
-            <span>Belum Sesuai</span>
-          </span>
-        );
-      default:
-        return (
-          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
-            {status}
-          </span>
-        );
-    }
-  };
-
   return (
-    <div className="space-y-6 max-w-6xl">
-      <div>
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-          Pelacakan Lamaran Saya
-        </h2>
-        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-          Pantau perkembangan status lamaran yang telah kamu setujui dan kirim.
-        </p>
-      </div>
+    <div className="space-y-5 sm:space-y-6 max-w-6xl animate-fade-in">
+      <PageHeader
+        title="Lamaran Saya"
+        subtitle={`${applications.length} lamaran terlacak · perbarui status saat ada kabar dari rekruter`}
+      />
 
-      {/* Filter and Search Bar */}
-      <div className="bg-white dark:bg-[#161B22] p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          {/* Status Tabs */}
-          <div className="flex flex-wrap items-center gap-1.5">
+      {/* Filter + pencarian */}
+      <div className="card p-4 space-y-3">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-1.5" role="tablist" aria-label="Filter status">
             {statusFilters.map((tab) => (
               <button
                 key={tab.id}
+                role="tab"
+                aria-selected={filterStatus === tab.id}
                 onClick={() => setFilterStatus(tab.id)}
-                className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors min-h-[36px] ${
-                  filterStatus === tab.id
-                    ? 'bg-brand-600 text-white shadow-sm'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
+                className={filterStatus === tab.id ? 'chip-active' : 'chip-idle'}
               >
                 {tab.label}
               </button>
             ))}
           </div>
-
-          {/* Search box */}
-          <div className="relative w-full sm:w-64">
+          <div className="relative w-full lg:w-64 shrink-0">
             <Search
               size={15}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
             />
             <input
-              type="text"
+              type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari posisi / perusahaan..."
-              className="w-full pl-9 pr-3 py-1.5 text-xs bg-gray-50 dark:bg-gray-900/60 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-600 min-h-[36px]"
+              placeholder="Cari posisi / perusahaan…"
+              aria-label="Cari lamaran"
+              className="input-icon"
             />
           </div>
         </div>
       </div>
 
-      {/* List or Table */}
       {filteredApps.length === 0 ? (
-        <div className="bg-white dark:bg-[#161B22] border border-dashed border-gray-200 dark:border-gray-800 rounded-xl p-10 text-center space-y-2">
-          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-            Tidak ada lamaran yang cocok dengan kriteria pencarian.
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Coba pilih filter status lain atau reset kata kunci pencarian.
-          </p>
-        </div>
+        <EmptyState
+          icon={FileSearch}
+          title="Tidak ada lamaran yang cocok"
+          description="Coba ubah filter status atau kata kunci pencarian."
+        />
       ) : (
-        <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-surface-1 dark:bg-[#0D1117] border-b border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 font-bold uppercase text-[10px] tracking-wider">
-                  <th className="py-3 px-4">Posisi & Perusahaan</th>
-                  <th className="py-3 px-4">Penerima</th>
-                  <th className="py-3 px-4">Tanggal Buat / Kirim</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Tindakan</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {filteredApps.map((app) => (
-                  <tr
-                    key={app.id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors"
-                  >
-                    <td className="py-3 px-4">
-                      <div className="font-semibold text-gray-900 dark:text-white text-sm">
-                        {app.jobTitle}
-                      </div>
-                      <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400 mt-0.5">
-                        <Building size={12} />
-                        <span>{app.company}</span>
-                      </div>
-                    </td>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {filteredApps.map((app) => (
+            <article key={app.id} className="card-hover p-5 flex flex-col gap-3.5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <h3 className="text-[15px] font-bold text-gray-900 dark:text-white tracking-tight leading-snug">
+                    {app.jobTitle}
+                  </h3>
+                  <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <Building2 size={13} />
+                    <span className="font-medium text-gray-700 dark:text-gray-300">{app.company}</span>
+                  </div>
+                </div>
+                <StatusBadge status={app.status} className="shrink-0" />
+              </div>
 
-                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300">
-                      <div className="flex items-center gap-1">
-                        <Mail size={12} className="text-gray-400" />
-                        <span>{app.recipientEmail}</span>
-                      </div>
-                      <span className="text-[10px] text-gray-400 block mt-0.5">
-                        Berkas: {app.attachmentName}
-                      </span>
-                    </td>
+              <div className="card-flat px-3.5 py-2.5 space-y-1 text-xs">
+                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                  <Mail size={13} className="text-gray-400 shrink-0" />
+                  <span className="truncate font-medium">{app.recipientEmail}</span>
+                </div>
+                <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                  {app.sentAt
+                    ? `Terkirim ${new Date(app.sentAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                    : `Dibuat ${new Date(app.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`}
+                  <span aria-hidden> · </span>
+                  {app.attachmentName}
+                </div>
+              </div>
 
-                    <td className="py-3 px-4 text-gray-500 dark:text-gray-400">
-                      <div>
-                        {app.sentAt
-                          ? `Terkirim: ${new Date(app.sentAt).toLocaleDateString('id-ID')}`
-                          : `Dibuat: ${new Date(app.createdAt).toLocaleDateString('id-ID')}`}
-                      </div>
-                    </td>
-
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        {getStatusBadge(app.status)}
-                      </div>
-                    </td>
-
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {/* Status dropdown quick update */}
-                        <select
-                          value={app.status}
-                          onChange={(e) =>
-                            onUpdateStatus(app.id, e.target.value as ApplicationStatus)
-                          }
-                          aria-label={`Ubah status lamaran ${app.jobTitle}`}
-                          className="text-[11px] bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded px-2 py-1 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-brand-600 min-h-[36px]"
-                        >
-                          <option value="menunggu_persetujuan">Menunggu Approval</option>
-                          <option value="terkirim">Terkirim</option>
-                          <option value="dibalas">Dibalas HRD</option>
-                          <option value="wawancara">Wawancara</option>
-                          <option value="diterima">Diterima</option>
-                          <option value="ditolak">Ditolak</option>
-                        </select>
-
-                        <button
-                          onClick={() => setSelectedApp(app)}
-                          title="Lihat Rincian Surat Lamaran"
-                          aria-label={`Lihat rincian lamaran ${app.jobTitle}`}
-                          className="p-1.5 text-gray-500 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded min-h-[36px] min-w-[36px] flex items-center justify-center"
-                        >
-                          <Eye size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              <div className="flex items-center gap-2 pt-1">
+                <label htmlFor={`status-${app.id}`} className="sr-only">
+                  Ubah status lamaran {app.jobTitle}
+                </label>
+                <select
+                  id={`status-${app.id}`}
+                  value={app.status}
+                  onChange={(e) => onUpdateStatus(app.id, e.target.value as ApplicationStatus)}
+                  className="select !min-h-[40px] !text-xs flex-1"
+                >
+                  {STATUS_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => setSelectedApp(app)}
+                  title="Lihat rincian surat"
+                  aria-label={`Lihat rincian lamaran ${app.jobTitle}`}
+                  className="btn-icon btn-secondary shrink-0"
+                >
+                  <Eye size={16} />
+                </button>
+              </div>
+            </article>
+          ))}
         </div>
       )}
 
-      {/* Read-only Detail Modal */}
+      {/* Modal rincian */}
       {selectedApp && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm"
-        >
-          <div className="bg-white dark:bg-[#161B22] rounded-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col border border-gray-200 dark:border-gray-800 shadow-2xl">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between bg-surface-1 dark:bg-[#0D1117]">
-              <div>
-                <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">
-                  Detail Berkas Terkirim
-                </span>
-                <h3 className="text-base font-bold text-gray-900 dark:text-white">
-                  {selectedApp.jobTitle} - {selectedApp.company}
+        <div role="dialog" aria-modal="true" className="modal-backdrop" onClick={() => setSelectedApp(null)}>
+          <div className="modal-panel max-w-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="min-w-0">
+                <span className="eyebrow block mb-1">Salinan surat terkirim</span>
+                <h3 className="text-base font-bold text-gray-900 dark:text-white tracking-tight truncate">
+                  {selectedApp.jobTitle} · {selectedApp.company}
                 </h3>
               </div>
               <button
                 onClick={() => setSelectedApp(null)}
-                aria-label="Tutup rincian lamaran"
-                className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Tutup rincian"
+                className="btn-icon text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/[0.06] shrink-0"
               >
-                Tutup
+                <X size={18} />
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto space-y-4">
-              <div className="bg-gray-50 dark:bg-gray-900/40 p-3 rounded-lg border border-gray-200 dark:border-gray-800 text-xs space-y-1">
-                <div>
-                  <span className="font-semibold text-gray-700 dark:text-gray-300">Penerima: </span>
-                  {selectedApp.recipientEmail}
-                </div>
-                <div>
-                  <span className="font-semibold text-gray-700 dark:text-gray-300">Subjek: </span>
-                  {selectedApp.subject}
-                </div>
-                <div>
-                  <span className="font-semibold text-gray-700 dark:text-gray-300">Lampiran: </span>
-                  {selectedApp.attachmentName}
-                </div>
-              </div>
+            <div className="modal-body space-y-4">
+              <dl className="card-flat p-4 space-y-1 text-xs">
+                <div className="info-row"><dt className="text-gray-500 dark:text-gray-400 font-medium">Penerima</dt><dd className="font-semibold text-gray-900 dark:text-white text-right break-all">{selectedApp.recipientEmail}</dd></div>
+                <div className="info-row"><dt className="text-gray-500 dark:text-gray-400 font-medium">Subjek</dt><dd className="font-semibold text-gray-900 dark:text-white text-right">{selectedApp.subject}</dd></div>
+                <div className="info-row"><dt className="text-gray-500 dark:text-gray-400 font-medium">Lampiran</dt><dd className="font-semibold text-gray-900 dark:text-white text-right">{selectedApp.attachmentName}</dd></div>
+                <div className="info-row"><dt className="text-gray-500 dark:text-gray-400 font-medium">Status</dt><dd><StatusBadge status={selectedApp.status} /></dd></div>
+              </dl>
 
               <div>
-                <span className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wider">
-                  Salinan Isi Surat Lamaran:
-                </span>
-                <div className="document-prose bg-white dark:bg-[#161B22] p-4 rounded-lg border border-gray-200 dark:border-gray-800 text-xs sm:text-sm whitespace-pre-line text-gray-800 dark:text-gray-200">
+                <span className="eyebrow block mb-2">Isi surat lamaran</span>
+                <div className="document-prose card p-5 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">
                   {selectedApp.coverLetter}
                 </div>
               </div>

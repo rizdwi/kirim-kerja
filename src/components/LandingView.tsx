@@ -9,35 +9,79 @@ import {
   ArrowRight,
   Send,
   Lock,
+  Sparkles,
+  Eye,
+  Zap,
 } from 'lucide-react';
 
 interface LandingViewProps {
   onEnterApp: () => void;
 }
 
+const steps = [
+  {
+    icon: FileText,
+    title: 'Unggah CV Utama',
+    desc: 'Satu CV jadi sumber kebenaran. AI hanya memakai fakta yang tertulis di sana — tanpa karangan.',
+  },
+  {
+    icon: LinkIcon,
+    title: 'Tempel Tautan Lowongan',
+    desc: 'Sistem membaca posisi, perusahaan, dan kontak HRD otomatis dari halaman lowongan.',
+  },
+  {
+    icon: Eye,
+    title: 'Tinjau & Setujui',
+    desc: 'Periksa surat dan klaim di layar review. Email terkirim hanya setelah kamu menekan setuju.',
+  },
+];
+
+const assurances = [
+  {
+    icon: Lock,
+    title: 'Persetujuan wajib',
+    desc: 'Tidak ada email yang terkirim tanpa kamu menekan tombol setuju.',
+  },
+  {
+    icon: Shield,
+    title: 'Anti-halusinasi',
+    desc: 'Klaim baru yang tak ada di CV ditandai dan dikunci sampai kamu konfirmasi.',
+  },
+  {
+    icon: Zap,
+    title: 'Tetap cepat',
+    desc: 'Surat lamaran terpersonalisasi tersusun dalam hitungan detik, bukan jam.',
+  },
+];
+
 export const LandingView: React.FC<LandingViewProps> = ({ onEnterApp }) => {
   return (
-    <div className="min-h-screen bg-surface-1 dark:bg-[#0D1117] text-gray-900 dark:text-white flex flex-col">
-      {/* Top Bar */}
-      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#161B22] px-6 py-4">
+    <div className="min-h-screen bg-[#0D1117] text-white flex flex-col antialiased">
+      {/* Latar: glow halus, murni CSS */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[720px] h-[420px] rounded-full bg-brand-500/15 blur-[120px]" />
+        <div className="absolute top-1/3 -left-40 w-[420px] h-[420px] rounded-full bg-brand-700/20 blur-[120px]" />
+      </div>
+
+      {/* Top bar */}
+      <header className="relative border-b border-white/[0.07] bg-white/[0.02] backdrop-blur-sm px-5 sm:px-6 py-4 sticky top-0 z-20">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-base">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-b from-brand-400 to-brand-600 flex items-center justify-center text-white font-extrabold text-lg shadow-pop">
               K
             </div>
             <div>
-              <span className="font-bold text-gray-900 dark:text-white text-base tracking-tight block">
+              <span className="font-bold text-white text-base tracking-tight block leading-none">
                 KirimKerja
               </span>
-              <span className="text-[10px] text-gray-500 dark:text-gray-400 block -mt-0.5">
+              <span className="text-[10px] text-gray-400 block mt-1">
                 Asisten Lamaran Kerja Semi-Otomatis
               </span>
             </div>
           </div>
-
           <button
             onClick={onEnterApp}
-            className="flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-lg transition-colors shadow-sm min-h-[44px]"
+            className="btn-primary btn-sm !min-h-[40px]"
           >
             <span>Buka Aplikasi</span>
             <ArrowRight size={15} />
@@ -45,101 +89,132 @@ export const LandingView: React.FC<LandingViewProps> = ({ onEnterApp }) => {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <main className="flex-1 max-w-4xl mx-auto px-6 py-12 sm:py-16 space-y-12">
-        <div className="space-y-4 text-center">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 text-xs font-semibold border border-brand-200 dark:border-brand-800">
+      <main className="relative flex-1 max-w-5xl mx-auto px-5 sm:px-6 w-full">
+        {/* Hero */}
+        <section className="py-14 sm:py-20 text-center space-y-6 animate-fade-in">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/[0.04] text-brand-300 text-xs font-semibold border border-white/[0.09]">
             <Lock size={12} />
-            <span>Persetujuan Wajib Setiap Lamaran</span>
+            <span>Persetujuan wajib untuk setiap lamaran</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-tight">
-            Melamar kerja lebih relevan, cepat, dan tetap dalam kendalimu.
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.08] max-w-3xl mx-auto">
+            Melamar kerja lebih{' '}
+            <span className="text-gradient">relevan & cepat</span>,
+            <br className="hidden sm:block" /> tetap dalam kendalimu.
           </h1>
 
-          <p className="text-base sm:text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
-            Simpan satu CV utama, tempel tautan lowongan yang ingin kamu lamar, lalu sistem menyusun surat lamaran yang dipersonalisasi. Kamu yang menyetujui setiap email sebelum terkirim.
+          <p className="text-sm sm:text-base text-gray-400 max-w-2xl mx-auto leading-relaxed">
+            Simpan satu CV utama, tempel tautan lowongan, dan dapatkan surat lamaran
+            yang dipersonalisasi — dengan pemeriksaan klaim anti-halusinasi sebelum
+            kamu menyetujui pengiriman.
           </p>
 
-          <div className="pt-2">
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
               onClick={onEnterApp}
-              className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm sm:text-base px-6 py-3 rounded-lg shadow-md hover:shadow-lg transition-all min-h-[48px]"
+              className="btn-primary !px-7 !py-3.5 !text-base w-full sm:w-auto"
             >
               <span>Mulai Siapkan Lamaran</span>
               <ArrowRight size={18} />
             </button>
-          </div>
-        </div>
-
-        {/* The 3 Concrete Steps */}
-        <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white text-center">
-            Tiga Langkah Mudah
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-2">
-              <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 flex items-center justify-center font-bold text-sm">
-                1
-              </div>
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-                Unggah CV Utama
-              </h3>
-              <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                Unggah dokumen PDF atau kompilasi sertifikat dan transkrip menjadi satu berkas terpadu.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 flex items-center justify-center font-bold text-sm">
-                2
-              </div>
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-                Tempel Tautan Lowongan
-              </h3>
-              <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                Sistem membaca posisi, nama perusahaan, dan alamat kontak HRD secara otomatis.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 flex items-center justify-center font-bold text-sm">
-                3
-              </div>
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-                Tinjau & Setujui
-              </h3>
-              <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                Periksa isi surat dan kecocokan klaim di layar review. Email hanya dikirim setelah kamu klik setujui.
-              </p>
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <CheckCircle2 size={14} className="text-success-400" />
+              <span>Gratis untuk pemakaian pribadi · Data tersimpan di perangkatmu</span>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Commitment to Trust & Privacy */}
-        <div className="bg-surface-0 dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-xl p-6 space-y-4">
-          <div className="flex items-center gap-2 text-brand-700 dark:text-brand-300">
-            <Shield size={20} />
-            <h3 className="text-sm font-bold">
-              Prinsip Privasi dan Transparansi
-            </h3>
+        {/* Langkah */}
+        <section className="pb-14 sm:pb-16">
+          <p className="eyebrow text-center mb-6 !text-gray-500">Cara kerja</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+            {steps.map((s, i) => (
+              <div
+                key={s.title}
+                className="card card-accent p-6 space-y-3 animate-slide-up"
+                style={{ animationDelay: `${i * 70}ms` }}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="w-10 h-10 rounded-xl bg-gradient-to-b from-brand-500/20 to-brand-500/5 border border-brand-400/20 text-brand-300 flex items-center justify-center">
+                    <s.icon size={19} strokeWidth={2.2} />
+                  </span>
+                  <span className="text-4xl font-extrabold text-white/[0.07] select-none">
+                    {i + 1}
+                  </span>
+                </div>
+                <h3 className="text-sm font-bold text-white tracking-tight">{s.title}</h3>
+                <p className="text-xs text-gray-400 leading-relaxed">{s.desc}</p>
+              </div>
+            ))}
           </div>
+        </section>
 
-          <div className="space-y-3 text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
-            <p className="font-semibold text-gray-800 dark:text-gray-200">
-              &quot;Kamu yang memutuskan. Tidak ada lamaran yang dikirim tanpa persetujuanmu.&quot;
+        {/* Jaminan */}
+        <section className="pb-14 sm:pb-16">
+          <div className="card p-6 sm:p-8">
+            <div className="flex items-center gap-2.5 mb-6">
+              <span className="w-9 h-9 rounded-xl bg-gradient-to-b from-success-500/20 to-success-500/5 border border-success-400/20 text-success-300 flex items-center justify-center">
+                <Shield size={18} />
+              </span>
+              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                Kenapa kamu bisa percaya
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              {assurances.map((a) => (
+                <div key={a.title} className="flex gap-3">
+                  <span className="w-8 h-8 rounded-lg bg-white/[0.05] border border-white/[0.08] text-brand-300 flex items-center justify-center shrink-0">
+                    <a.icon size={16} />
+                  </span>
+                  <div>
+                    <h3 className="text-xs font-bold text-white">{a.title}</h3>
+                    <p className="text-xs text-gray-400 mt-1 leading-relaxed">{a.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 pt-5 border-t border-white/[0.07] flex items-start gap-2.5">
+              <Sparkles size={15} className="text-brand-300 shrink-0 mt-0.5" />
+              <p className="text-xs text-gray-400 leading-relaxed">
+                <span className="font-semibold text-gray-200">
+                  “Kamu yang memutuskan.”
+                </span>{' '}
+                KirimKerja bukan bot massal. Seluruh data tersimpan lokal di perambanmu —
+                unduh atau hapus kapan saja sesuai UU Pelindungan Data Pribadi No. 27/2022.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA akhir */}
+        <section className="pb-16 sm:pb-20 text-center">
+          <div className="card card-accent p-8 sm:p-10 relative overflow-hidden">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 w-96 h-48 rounded-full bg-brand-500/15 blur-[80px]"
+            />
+            <h2 className="relative text-xl sm:text-2xl font-extrabold tracking-tight text-white">
+              Siap melamar lebih cerdas malam ini?
+            </h2>
+            <p className="relative text-xs sm:text-sm text-gray-400 mt-2 max-w-md mx-auto">
+              Unggah CV-mu sekali, lalu biarkan setiap lowongan mendapatkan surat
+              lamaran yang relevan.
             </p>
-            <p>
-              Aplikasi ini bukan bot massal dan tidak mengambil lowongan tanpa izin. AI hanya menyelaraskan kata kunci dari pengalaman yang sudah tertulis di CV kamu tanpa menambah fakta palsu. Setiap data tersimpan dengan aman dan dapat kamu unduh atau hapus kapan saja sesuai UU Pelindungan Data Pribadi (UU No. 27/2022).
-            </p>
+            <button
+              onClick={onEnterApp}
+              className="relative btn-primary !px-7 !py-3 mt-6"
+            >
+              <Send size={16} />
+              <span>Buka KirimKerja</span>
+            </button>
           </div>
-        </div>
+        </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-[#161B22] py-6 px-6 text-center text-xs text-gray-500 dark:text-gray-400">
-        <p>KirimKerja. Asisten Lamaran Kerja Semi-Otomatis.</p>
+      <footer className="relative border-t border-white/[0.07] py-6 px-6 text-center">
+        <p className="text-[11px] text-gray-500">
+          KirimKerja · Asisten Lamaran Kerja Semi-Otomatis · Untuk pemakaian pribadi
+        </p>
       </footer>
     </div>
   );

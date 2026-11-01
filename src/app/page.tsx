@@ -64,9 +64,12 @@ export default function Home() {
 
     setIsLoaded(true);
 
-    // Read stored theme preference
+    // Read stored theme preference — default elegan: dark mode
     const savedTheme = localStorage.getItem('kirimkerja_theme');
-    if (savedTheme === 'dark') {
+    if (savedTheme === 'light') {
+      setDarkMode(false);
+      document.documentElement.classList.remove('dark');
+    } else {
       setDarkMode(true);
       document.documentElement.classList.add('dark');
     }

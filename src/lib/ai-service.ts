@@ -7,77 +7,109 @@ export interface PersonalizeResult {
   claims: ApplicationClaim[];
 }
 
+async function generateText(prompt: string): Promise<string> {
+  const res = await fetch('/api/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'AI generation gagal');
+  return data.text as string;
+}
+
+// Humanizer rules baked into every prompt: no em-dashes, no buzzwords,
+// warm professional Indonesian, grounded ONLY in CV facts.
+const HUMANIZER = `Aturan bahasa (W AJIB dipatuhi):
+- Bahasa Indonesia profesional yang hangat dan natural, seperti ditulis manusia.
+- JANGAN pakai em dash (—). JANGAN pakai buzzword kosong ("cutting-edge", "ninja", "rockstar", "passionate" berlebihan).
+- Hanya tulis fakta yang ada di CV. JANGAN mengarang pengalaman, angka, atau keahlian baru.`;
+
 export const AiPersonalizationService = {
-  personalize(
+  async personalize(
     profile: UserProfile,
     primaryCv: DocumentItem,
     job: JobPost
-  ): PersonalizeResult {
-    const cvText = primaryCv.extractedText || '';
-    const jobDesc = job.description || '';
+  ): Promise<PersonalizeResult> {
+    const cvText = (primaryCv.extractedText || '').slice(0, 6000);
+    const jobDesc = (job.description || '').slice(0, 3000);
     const company = job.company || 'Perusahaan';
     const position = job.title || 'Posisi';
 
-    // Subject email: clean, professional
-    const subject = `Lamaran Pekerjaan: ${position} - ${profile.fullName}`;
+    const prompt = `Kamu asisten lamaran kerja. Buatkan surat lamaran kerja personal.
 
-    // Extract key skills mentioned in CV
-    const skillsInCv: string[] = [];
-    ['React', 'Next.js', 'TypeScript', 'Tailwind', 'Node.js', 'PostgreSQL', 'SQL', 'Git', 'REST API', 'Figma', 'UI/UX'].forEach((sk) => {
-      if (new RegExp(sk, 'i').test(cvText)) {
-        skillsInCv.push(sk);
-      }
-    });
+DATA PELAMAR (CV):
+${cvText || '(CV kosong)'}
+Nama: ${profile.fullName}
+Email: ${profile.email} | Telp: ${profile.phone}
 
-    // Check if job asks for leadership or metrics
-    const asksLeadership = /lead|memimpin|lead developer|tech lead|senior|manage/i.test(jobDesc);
-    const hasLeadershipInCv = /memimpin|lead|supervisor|kepala|manager/i.test(cvText);
+LOWONGAN:
+Posisi: ${position}
+Perusahaan: ${company}
+Deskripsi: ${jobDesc || '(tidak ada deskripsi)'}
 
-    // Adapted sections (evidence grounding)
+${HUMANIZER}
+
+Tugas:
+1. Subject email lamaran (1 baris).
+2. Surat lamaran lengkap: salam pembuka "Yth. Tim Rekrutmen ${company}," — perkenalan singkat — 1 paragraf relevansi (kaitkan 2-3 keahlian/pengalaman NYATA dari CV dengan kebutuhan lowongan) — 1 paragraf nilai tambah — penutup dengan ajakan wawancara — tanda tangan (nama, telp, email).
+3. Daftar klaim yang perlu konfirmasi user: bila surat menyebut hal yang TIDAK jelas ada di CV (mis. pengalaman memimpin, metrik), tulis sebagai daftar terpisah.
+
+Format jawaban PERSIS seperti ini:
+SUBJECT: <subject>
+---
+SURAT:
+<isi surat>
+---
+KLAIM_PERLU_KONFIRMASI:
+- <klaim 1> | kategori: <pengalaman/keahlian/metrik>
+- <klaim 2> | kategori: <...>
+(jika tidak ada, tulis: TIDAK ADA)`;
+
+    const raw = await generateText(prompt);
+
+    // Parse structured response
+    const subjectMatch = raw.match(/SUBJECT:\s*(.+)/);
+    const letterMatch = raw.match(/SURAT:\s*([\s\S]*?)\n---\s*KLAIM_PERLU_KONFIRMASI:/);
+    const claimsMatch = raw.match(/KLAIM_PERLU_KONFIRMASI:\s*([\s\S]*)$/);
+
+    const subject =
+      subjectMatch?.[1]?.trim() ||
+      `Lamaran Pekerjaan: ${position} - ${profile.fullName}`;
+    const coverLetter =
+      letterMatch?.[1]?.trim() ||
+      raw.slice(0, 3000);
+
+    const claims: ApplicationClaim[] = [];
+    const claimsRaw = claimsMatch?.[1]?.trim() || '';
+    if (claimsRaw && !/TIDAK ADA/i.test(claimsRaw)) {
+      claimsRaw
+        .split('\n')
+        .map((l) => l.replace(/^-\s*/, '').trim())
+        .filter(Boolean)
+        .forEach((line, i) => {
+          const [text, cat] = line.split('|').map((s) => s.trim());
+          claims.push({
+            id: `clm_${Date.now()}_${i}`,
+            text: text || line,
+            category: (cat?.replace('kategori:', '').trim() ||
+              'pengalaman') as ApplicationClaim['category'],
+            status: 'unconfirmed',
+          });
+        });
+    }
+
     const adaptedSections: AdaptedSection[] = [
       {
-        id: 'adp_role_match',
-        field: 'Kesesuaian Posisi',
-        originalText: `Pengalaman web development dengan fokus ekosistem modern: ${skillsInCv.slice(0, 4).join(', ')}.`,
-        adaptedText: `Menyesuaikan pembuka dan penekanan keahlian utama untuk relevansi langsung dengan peran ${position} di ${company}.`,
-        evidence: `CV Bagian Ringkasan & Keahlian (${primaryCv.displayName})`,
+        id: 'adp_ai_personalize',
+        field: 'Personalisasi AI',
+        originalText: 'Template generik surat lamaran.',
+        adaptedText:
+          'Surat disusun AI berdasarkan isi CV dan deskripsi lowongan, mengikuti aturan grounding (tanpa fakta karangan).',
+        evidence: `CV: ${primaryCv.displayName} | Lowongan: ${position} @ ${company}`,
       },
     ];
 
-    // Grounding check for new claims
-    const claims: ApplicationClaim[] = [];
-    if (asksLeadership && !hasLeadershipInCv) {
-      claims.push({
-        id: 'clm_' + Date.now() + '_1',
-        text: `Memiliki kesiapan dan pengalaman mengarahkan implementasi teknis tim untuk peran ${position}`,
-        category: 'pengalaman',
-        status: 'unconfirmed',
-      });
-    }
-
-    // Cover letter generation following humanizer guidelines:
-    // NO em dashes, warm and professional tone, zero buzzwords
-    const coverLetter = `Yth. Tim Rekrutmen ${company},
-
-Perkenalkan, saya ${profile.fullName}, seorang pengembang web dengan latar belakang di bidang ${profile.interests[0] || 'pengembangan perangkat lunak'}. Melalui surat ini, saya ingin menyampaikan ketertarikan saya untuk berkontribusi sebagai ${position} di ${company}.
-
-Berdasarkan deskripsi lowongan yang disampaikan, ${company} membutuhkan tenaga profesional yang siap merancang solusi efisien dan dapat diandalkan. Mengacu pada pengalaman kerja saya sebelumnya, saya terbiasa membangun antarmuka web yang rapi, memastikan performa optimal, serta mengintegrasikan API dengan standar kode yang terstruktur.
-
-Keahlian utama saya mencakup ${skillsInCv.length > 0 ? skillsInCv.join(', ') : 'pengembangan web modern'}, yang saya yakini dapat langsung mendukung kebutuhan operasional tim Anda. Saya terbiasa berkomunikasi aktif, cepat beradaptasi, dan mengedepankan kualitas hasil kerja.
-
-Bersama surat ini, saya melampirkan berkas CV saya (${primaryCv.displayName}) untuk bahan pertimbangan lebih lanjut. Saya sangat terbuka untuk kesempatan wawancara agar dapat menjelaskan lebih mendalam mengenai bagaimana kompetensi saya dapat memberikan nilai tambah bagi ${company}.
-
-Terima kasih atas waktu dan perhatian yang Bapak/Ibu berikan.
-
-Hormat saya,
-${profile.fullName}
-${profile.phone} | ${profile.email}`;
-
-    return {
-      subject,
-      coverLetter,
-      adaptedSections,
-      claims,
-    };
+    return { subject, coverLetter, adaptedSections, claims };
   },
 };

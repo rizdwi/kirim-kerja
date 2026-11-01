@@ -2,18 +2,20 @@
 
 import React from 'react';
 import {
+  LayoutDashboard,
+  Compass,
   Briefcase,
-  FileText,
   Clock,
-  Send,
+  FileText,
+  FolderOpen,
   Settings,
   Sun,
   Moon,
   ExternalLink,
-  Sparkles,
   LogOut,
 } from 'lucide-react';
 import { EmailSettings } from '@/types';
+import { QuotaBar } from '@/components/ui';
 
 interface SidebarProps {
   currentTab: string;
@@ -37,9 +39,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onLogout,
 }) => {
   const navItems = [
-    { id: 'dashboard', label: 'Beranda', icon: Briefcase },
-    { id: 'explore', label: 'Jelajah Lowongan', icon: Sparkles },
-    { id: 'jobs', label: 'Lowongan Saya', icon: Send },
+    { id: 'dashboard', label: 'Beranda', icon: LayoutDashboard },
+    { id: 'explore', label: 'Jelajah Lowongan', icon: Compass },
+    { id: 'jobs', label: 'Lowongan Saya', icon: Briefcase },
     {
       id: 'queue',
       label: 'Antrean Lamaran',
@@ -47,34 +49,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: waitingCount > 0 ? waitingCount : undefined,
     },
     { id: 'tracking', label: 'Lamaran Saya', icon: FileText },
-    { id: 'documents', label: 'CV & Berkas', icon: FileText },
+    { id: 'documents', label: 'CV & Berkas', icon: FolderOpen },
     { id: 'settings', label: 'Pengaturan', icon: Settings },
   ];
 
   return (
-    <aside className="w-64 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#161B22] flex flex-col h-screen sticky top-0 select-none">
-      {/* Brand Header */}
-      <div className="p-5 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+    <aside className="w-[260px] shrink-0 border-r border-gray-200/80 dark:border-white/[0.07] bg-white dark:bg-[#0D1117] flex flex-col h-screen sticky top-0 select-none">
+      {/* Brand */}
+      <div className="px-5 py-5 border-b border-gray-100 dark:border-white/[0.06]">
         <button
           onClick={() => onTabChange('dashboard')}
-          className="flex items-center gap-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 rounded"
+          className="flex items-center gap-3 text-left rounded-xl"
+          aria-label="Kembali ke beranda"
         >
-          <div className="w-9 h-9 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-b from-brand-400 to-brand-600 flex items-center justify-center text-white font-extrabold text-lg shadow-card">
             K
           </div>
           <div>
-            <span className="font-semibold text-gray-900 dark:text-white text-base tracking-tight block">
+            <span className="font-extrabold text-gray-900 dark:text-white text-[15px] tracking-tight block leading-none">
               KirimKerja
             </span>
-            <span className="text-[11px] text-gray-500 dark:text-gray-400 block font-normal">
-              Asisten Semi-Otomatis
+            <span className="text-[11px] text-gray-500 dark:text-gray-400 block mt-1">
+              Asisten lamaran pribadimu
             </span>
           </div>
         </button>
       </div>
 
-      {/* Nav List */}
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+      {/* Nav */}
+      <nav aria-label="Navigasi utama" className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentTab === item.id;
@@ -82,27 +85,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               key={item.id}
               onClick={() => onTabChange(item.id)}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
+              aria-current={isActive ? 'page' : undefined}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-all duration-150 min-h-[44px] group ${
                 isActive
-                  ? 'bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 font-semibold'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  ? 'bg-gradient-to-r from-brand-600/[0.12] to-brand-600/[0.04] dark:from-brand-400/[0.14] dark:to-transparent text-brand-700 dark:text-brand-200 font-semibold [box-shadow:inset_2px_0_0_0_#1F5F8B] dark:[box-shadow:inset_2px_0_0_0_#4E94C4]'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100/80 dark:hover:bg-white/[0.05] hover:text-gray-900 dark:hover:text-gray-100 font-medium'
               }`}
             >
-              <div className="flex items-center gap-3">
+              <span className="flex items-center gap-3">
                 <Icon
                   size={18}
-                  className={isActive ? 'text-brand-600 dark:text-brand-400' : 'text-gray-500 dark:text-gray-400'}
+                  strokeWidth={isActive ? 2.4 : 2}
+                  className={`transition-transform duration-150 ${isActive ? '' : 'group-hover:scale-110'}`}
                 />
                 <span>{item.label}</span>
-              </div>
+              </span>
               {item.badge !== undefined && (
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
-                    isActive
-                      ? 'bg-brand-600 text-white'
-                      : 'bg-warning-50 text-warning-700 border border-warning-200'
-                  }`}
-                >
+                <span className="text-[11px] px-2 py-0.5 rounded-full font-bold bg-warning-500/15 text-warning-700 dark:text-warning-300 border border-warning-500/25 tabular-nums">
                   {item.badge}
                 </span>
               )}
@@ -111,63 +110,50 @@ export const Sidebar: React.FC<SidebarProps> = ({
         })}
       </nav>
 
-      {/* Bottom section: Quota meter and controls */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-800 space-y-3.5">
-        {/* Daily Quota Card */}
-        <div className="bg-gray-50 dark:bg-gray-800/60 p-3 rounded-lg border border-gray-200/80 dark:border-gray-700/60">
-          <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-300 mb-1.5">
-            <span>Batas Harian Email</span>
-            <span className="font-semibold text-gray-900 dark:text-white">
-              {emailSettings.dailySentCount} / {emailSettings.dailyLimit}
+      {/* Bottom: kuota + kontrol */}
+      <div className="p-4 border-t border-gray-100 dark:border-white/[0.06] space-y-3">
+        <div className="card-flat p-3.5">
+          <div className="flex items-center justify-between text-xs mb-2">
+            <span className="text-gray-500 dark:text-gray-400 font-medium">Kuota harian</span>
+            <span className="font-bold text-gray-900 dark:text-white tabular-nums">
+              {emailSettings.dailySentCount}/{emailSettings.dailyLimit}
             </span>
           </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden">
-            <div
-              className={`h-full transition-all ${
-                emailSettings.dailySentCount >= emailSettings.dailyLimit
-                  ? 'bg-danger-600'
-                  : 'bg-brand-600'
-              }`}
-              style={{
-                width: `${Math.min(100, (emailSettings.dailySentCount / emailSettings.dailyLimit) * 100)}%`,
-              }}
-            />
-          </div>
-          <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5">
-            Satu email per lowongan, perlindungan reputasi Gmail.
+          <QuotaBar used={emailSettings.dailySentCount} limit={emailSettings.dailyLimit} />
+          <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-2 leading-snug">
+            1 email per lowongan — menjaga reputasi Gmail.
           </p>
         </div>
 
-        {/* Action buttons: Theme toggle & Landing Page & Logout */}
-        <div className="flex items-center justify-between pt-1">
+        <div className="flex items-center justify-between">
           <button
             onClick={onToggleDarkMode}
             aria-label={darkMode ? 'Beralih ke mode terang' : 'Beralih ke mode gelap'}
-            className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 min-h-[44px]"
+            className="btn-ghost btn-sm"
           >
             {darkMode ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} />}
-            <span className="hidden sm:inline">{darkMode ? 'Terang' : 'Gelap'}</span>
+            <span>{darkMode ? 'Terang' : 'Gelap'}</span>
+          </button>
+
+          <button
+            onClick={onOpenLanding}
+            className="btn-ghost btn-sm"
+            title="Buka halaman panduan"
+          >
+            <span>Panduan</span>
+            <ExternalLink size={13} />
           </button>
 
           {onLogout && (
             <button
               onClick={onLogout}
-              className="flex items-center gap-1 text-xs text-danger-600 hover:text-danger-700 dark:text-danger-400 p-2 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-900/30 min-h-[44px]"
+              className="btn-danger-ghost btn-sm"
               title="Keluar dari sesi akun"
             >
               <LogOut size={14} />
               <span>Keluar</span>
             </button>
           )}
-
-          <button
-            onClick={onOpenLanding}
-            className="text-xs text-gray-500 hover:text-brand-600 dark:text-gray-400 dark:hover:text-brand-300 flex items-center gap-1 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 min-h-[44px]"
-            title="Buka Halaman Info Publik"
-          >
-            <span>Panduan</span>
-            <ExternalLink size={14} />
-          </button>
         </div>
       </div>
     </aside>

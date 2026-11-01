@@ -10,9 +10,11 @@ import {
   CheckCircle2,
   Clock,
   AlertTriangle,
+  X,
 } from 'lucide-react';
 import { UserProfile, EmailSettings } from '@/types';
 import { StorageService } from '@/lib/storage';
+import { PageHeader } from '@/components/ui';
 
 interface SettingsViewProps {
   profile: UserProfile;
@@ -20,6 +22,15 @@ interface SettingsViewProps {
   onSaveProfile: (profile: UserProfile) => void;
   onSaveEmailSettings: (settings: EmailSettings) => void;
 }
+
+const SectionHead: React.FC<{ icon: React.ReactNode; title: string }> = ({ icon, title }) => (
+  <div className="flex items-center gap-2.5 pb-3 border-b border-gray-100 dark:border-white/[0.06]">
+    <span className="w-8 h-8 rounded-lg bg-gradient-to-b from-brand-500/15 to-brand-500/5 border border-brand-500/20 text-brand-500 dark:text-brand-300 flex items-center justify-center">
+      {icon}
+    </span>
+    <h3 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">{title}</h3>
+  </div>
+);
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
   profile,
@@ -50,7 +61,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       salaryExpectation: salary.trim(),
     };
     onSaveProfile(updated);
-    setSaveNotice('Perubahan profil berhasil disimpan.');
+    setSaveNotice('Profil berhasil disimpan.');
     setTimeout(() => setSaveNotice(null), 3000);
   };
 
@@ -72,256 +83,161 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     window.location.reload();
   };
 
+  const field = (label: string, control: React.ReactNode, hint?: string) => (
+    <div>
+      <label className="label">{label}</label>
+      {control}
+      {hint && <p className="hint">{hint}</p>}
+    </div>
+  );
+
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div>
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-          Pengaturan Akun & Privasi
-        </h2>
-        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-          Kelola data diri, akun Gmail terhubung, serta kontrol privasi sesuai UU PDP.
-        </p>
-      </div>
+    <div className="space-y-5 sm:space-y-6 max-w-4xl animate-fade-in">
+      <PageHeader
+        title="Pengaturan"
+        subtitle="Profil pelamar, koneksi email, dan kontrol privasimu"
+      />
 
       {saveNotice && (
-        <div className="p-3 bg-success-50 dark:bg-success-900/30 border border-success-200 dark:border-success-800 text-success-800 dark:text-success-300 rounded-lg text-xs font-semibold flex items-center gap-2">
-          <CheckCircle2 size={16} />
-          <span>{saveNotice}</span>
+        <div role="status" className="card p-3.5 border-success-200 dark:border-success-800 flex items-center gap-2.5 animate-slide-up">
+          <CheckCircle2 size={17} className="text-success-500 shrink-0" />
+          <span className="text-xs font-semibold text-success-700 dark:text-success-300">{saveNotice}</span>
         </div>
       )}
 
-      {/* Profile Card */}
-      <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-xl p-5 shadow-sm space-y-4">
-        <div className="flex items-center gap-2 border-b border-gray-100 dark:border-gray-800 pb-3">
-          <User size={18} className="text-brand-600" />
-          <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-            Data Profil Pelamar
-          </h3>
-        </div>
-
+      {/* Profil */}
+      <section className="card p-5 sm:p-6 space-y-5">
+        <SectionHead icon={<User size={16} />} title="Data Profil Pelamar" />
         <form onSubmit={handleSaveProfile} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                Nama Lengkap:
-              </label>
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
-                className="w-full px-3 py-2 text-xs bg-white dark:bg-[#161B22] border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-600 min-h-[44px]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                Nomor HP (Format E.164):
-              </label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+628123456789"
-                required
-                className="w-full px-3 py-2 text-xs bg-white dark:bg-[#161B22] border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-600 min-h-[44px]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                Kota Domisili:
-              </label>
-              <input
-                type="text"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                required
-                className="w-full px-3 py-2 text-xs bg-white dark:bg-[#161B22] border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-600 min-h-[44px]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                Ekspektasi Gaji (Opsional):
-              </label>
-              <input
-                type="text"
-                value={salary}
-                onChange={(e) => setSalary(e.target.value)}
-                placeholder="Contoh: Rp 12.000.000 - Rp 15.000.000"
-                className="w-full px-3 py-2 text-xs bg-white dark:bg-[#161B22] border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-600 min-h-[44px]"
-              />
-            </div>
+            {field('Nama lengkap', (
+              <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} required className="input" autoComplete="name" />
+            ))}
+            {field('Nomor HP', (
+              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+628123456789" required className="input" autoComplete="tel" />
+            ), 'Format internasional, mis. +62812…')}
+            {field('Kota domisili', (
+              <input type="text" value={city} onChange={(e) => setCity(e.target.value)} required className="input" autoComplete="address-level2" />
+            ))}
+            {field('Ekspektasi gaji (opsional)', (
+              <input type="text" value={salary} onChange={(e) => setSalary(e.target.value)} placeholder="Rp 12–15 juta" className="input" />
+            ))}
           </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-              Bidang yang Diminati (Pisahkan dengan koma, maksimal 3):
-            </label>
-            <input
-              type="text"
-              value={interestsText}
-              onChange={(e) => setInterestsText(e.target.value)}
-              placeholder="Frontend Developer, Fullstack Developer, UI/UX"
-              className="w-full px-3 py-2 text-xs bg-white dark:bg-[#161B22] border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-600 min-h-[44px]"
-            />
-          </div>
-
-          <div className="pt-2 flex justify-end">
-            <button
-              type="submit"
-              className="bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs px-5 py-2.5 rounded-lg transition-colors shadow-sm min-h-[44px]"
-            >
+          {field('Bidang yang diminati', (
+            <input type="text" value={interestsText} onChange={(e) => setInterestsText(e.target.value)} placeholder="Frontend Developer, UI/UX" className="input" />
+          ), 'Pisahkan dengan koma, maksimal 3 bidang.')}
+          <div className="flex justify-end pt-1">
+            <button type="submit" className="btn-primary w-full sm:w-auto">
               Simpan Profil
             </button>
           </div>
         </form>
-      </div>
+      </section>
 
-      {/* Gmail Connection Card */}
-      <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-xl p-5 shadow-sm space-y-4">
-        <div className="flex items-center gap-2 border-b border-gray-100 dark:border-gray-800 pb-3">
-          <Mail size={18} className="text-brand-600" />
-          <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-            Koneksi Pengiriman Email
-          </h3>
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface-1 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-200 dark:border-gray-800">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-gray-900 dark:text-white">
-                {emailSettings.gmailEmail}
+      {/* Gmail */}
+      <section className="card p-5 sm:p-6 space-y-4">
+        <SectionHead icon={<Mail size={16} />} title="Koneksi Email" />
+        <div className="card-flat p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                {emailSettings.gmailEmail || 'Belum terhubung'}
               </span>
-              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-success-50 text-success-700 border border-success-200">
-                Terhubung
-              </span>
+              {emailSettings.gmailConnected ? (
+                <span className="badge-success">Terhubung</span>
+              ) : (
+                <span className="badge-warning">Belum terhubung</span>
+              )}
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-md">
-              Aplikasi hanya meminta izin untuk mengirim email lamaran yang telah kamu setujui. Kami tidak membaca isi kotak masuk kamu.
+            <p className="hint max-w-md">
+              Izin hanya untuk mengirim lamaran yang kamu setujui. Isi kotak masuk tidak dibaca.
             </p>
           </div>
-
           <button
             onClick={() =>
-              onSaveEmailSettings({
-                ...emailSettings,
-                gmailConnected: !emailSettings.gmailConnected,
-              })
+              onSaveEmailSettings({ ...emailSettings, gmailConnected: !emailSettings.gmailConnected })
             }
-            className={`text-xs font-semibold px-4 py-2 rounded-lg border transition-colors min-h-[44px] ${
-              emailSettings.gmailConnected
-                ? 'border-gray-300 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800'
-                : 'bg-brand-600 text-white border-brand-600'
-            }`}
+            className={emailSettings.gmailConnected ? 'btn-secondary btn-sm shrink-0' : 'btn-primary btn-sm shrink-0'}
           >
             {emailSettings.gmailConnected ? 'Cabut Akses' : 'Hubungkan Gmail'}
           </button>
         </div>
-      </div>
+      </section>
 
-      {/* Daily Apply Limit (15 - 18 max per day) */}
-      <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-xl p-5 shadow-sm space-y-4">
-        <div className="flex items-center gap-2 border-b border-gray-100 dark:border-gray-800 pb-3">
-          <Clock size={18} className="text-brand-600" />
-          <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-            Batas Pengiriman Harian (Anti-Spam Gmail)
-          </h3>
-        </div>
-
-        <div className="space-y-3">
-          <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
-            Atur batas maksimal lamaran terkirim per hari (antara 15 sampai 18 email). Pembatasan ini menjaga agar akun Gmail kamu tidak dianggap mengirim spam oleh filter email rekruter.
-          </p>
-          <div className="flex flex-wrap items-center gap-2.5">
-            {[15, 16, 17, 18].map((limitVal) => (
-              <button
-                key={limitVal}
-                type="button"
-                onClick={() =>
-                  onSaveEmailSettings({
-                    ...emailSettings,
-                    dailyLimit: limitVal,
-                  })
-                }
-                className={`px-4 py-2 text-xs font-bold rounded-lg border transition-colors min-h-[44px] ${
-                  emailSettings.dailyLimit === limitVal
-                    ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
-                    : 'bg-surface-1 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {limitVal} Email / Hari
-              </button>
-            ))}
-          </div>
-          <span className="text-[11px] text-gray-500 dark:text-gray-400 block pt-1">
-            Saat ini terkirim: {emailSettings.dailySentCount} dari {emailSettings.dailyLimit} kuota hari ini.
-          </span>
-        </div>
-      </div>
-
-      {/* Privacy, UU PDP, & Data Protection */}
-      <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-xl p-5 shadow-sm space-y-4">
-        <div className="flex items-center gap-2 border-b border-gray-100 dark:border-gray-800 pb-3">
-          <Shield size={18} className="text-brand-600" />
-          <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-            Privasi & Hak Data (UU PDP No. 27/2022)
-          </h3>
-        </div>
-
-        <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
-          Sesuai dengan ketentuan perlindungan data pribadi, kamu berhak mengunduh seluruh data yang tersimpan serta menghapus seluruh riwayat lamaran dan profil kapan saja. Berkas CV kamu tidak dibagikan ke pihak ketiga selain rekruter yang telah kamu setujui secara eksplisit.
+      {/* Batas harian */}
+      <section className="card p-5 sm:p-6 space-y-4">
+        <SectionHead icon={<Clock size={16} />} title="Batas Pengiriman Harian" />
+        <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+          15–18 email per hari menjaga akun Gmail-mu tidak ditandai spam oleh filter rekruter.
+          Terkirim hari ini: <strong className="text-gray-800 dark:text-gray-200 tabular-nums">{emailSettings.dailySentCount}/{emailSettings.dailyLimit}</strong>
         </p>
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Pilih batas harian">
+          {[15, 16, 17, 18].map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => onSaveEmailSettings({ ...emailSettings, dailyLimit: v })}
+              aria-pressed={emailSettings.dailyLimit === v}
+              className={emailSettings.dailyLimit === v ? 'chip-active' : 'chip-idle'}
+            >
+              {v}/hari
+            </button>
+          ))}
+        </div>
+      </section>
 
-        <div className="flex flex-wrap items-center gap-3 pt-2">
-          <button
-            onClick={handleDownloadAllData}
-            className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs font-semibold px-4 py-2.5 rounded-lg transition-colors min-h-[44px]"
-          >
+      {/* Privasi */}
+      <section className="card p-5 sm:p-6 space-y-4">
+        <SectionHead icon={<Shield size={16} />} title="Privasi & Data (UU PDP)" />
+        <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+          Kamu berhak mengunduh seluruh data atau menghapusnya permanen kapan saja.
+          CV tidak dibagikan ke pihak ketiga selain rekruter yang kamu setujui.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-2.5">
+          <button onClick={handleDownloadAllData} className="btn-secondary">
             <Download size={15} />
-            <span>Unduh Seluruh Data Saya (JSON)</span>
+            <span>Unduh Dataku (JSON)</span>
           </button>
-
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            className="flex items-center gap-1.5 text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 text-xs font-semibold px-4 py-2.5 rounded-lg transition-colors border border-danger-200 dark:border-danger-800 min-h-[44px]"
-          >
+          <button onClick={() => setShowDeleteConfirm(true)} className="btn-danger-ghost border border-danger-200 dark:border-danger-800">
             <Trash2 size={15} />
-            <span>Hapus Seluruh Data Akun</span>
+            <span>Hapus Seluruh Data</span>
           </button>
         </div>
-      </div>
+      </section>
 
-      {/* Two-step Account Deletion Confirmation (PRD 6.8 & AFD 4.11) */}
+      {/* Konfirmasi hapus */}
       {showDeleteConfirm && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm"
-        >
-          <div className="bg-white dark:bg-[#161B22] rounded-xl p-6 max-w-md w-full border border-danger-200 dark:border-danger-800 shadow-2xl space-y-4">
-            <div className="flex items-center gap-2 text-danger-600 font-bold text-sm">
-              <AlertTriangle size={20} />
-              <span>Konfirmasi Hapus Akun & Data</span>
+        <div role="dialog" aria-modal="true" className="modal-backdrop" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="modal-panel max-w-md !rounded-2xl m-4 relative" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-2.5">
+                <span className="w-10 h-10 rounded-xl bg-danger-500/10 border border-danger-500/25 text-danger-500 flex items-center justify-center">
+                  <AlertTriangle size={19} />
+                </span>
+                <h3 className="text-base font-bold text-gray-900 dark:text-white tracking-tight">
+                  Hapus semua data?
+                </h3>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                Profil, berkas CV, antrean lamaran, dan riwayat persetujuan akan dihapus
+                permanen dari peramban ini. Tidak bisa dibatalkan.
+              </p>
+              <div className="flex justify-end gap-2 pt-1">
+                <button onClick={() => setShowDeleteConfirm(false)} className="btn-ghost">
+                  Batal
+                </button>
+                <button onClick={handleClearAccountData} className="btn !bg-danger-600 hover:!bg-danger-700 text-white">
+                  Ya, Hapus Semua
+                </button>
+              </div>
             </div>
-            <p className="text-xs text-gray-600 dark:text-gray-300">
-              Tindakan ini akan menghapus permanen seluruh profil, berkas CV yang diunggah, antrean lamaran, dan riwayat persetujuan dari peramban ini. Tindakan ini tidak dapat dibatalkan.
-            </p>
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="px-4 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg min-h-[44px]"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleClearAccountData}
-                className="px-4 py-2 text-xs font-semibold bg-danger-600 hover:bg-danger-700 text-white rounded-lg transition-colors min-h-[44px]"
-              >
-                Ya, Hapus Semua Data
-              </button>
-            </div>
+            <button
+              onClick={() => setShowDeleteConfirm(false)}
+              aria-label="Tutup"
+              className="btn-icon absolute top-3 right-3 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+            >
+              <X size={16} />
+            </button>
           </div>
         </div>
       )}

@@ -8,9 +8,12 @@ import {
   Star,
   Trash2,
   Eye,
-  CheckCircle,
+  CheckCircle2,
+  X,
+  FolderOpen,
 } from 'lucide-react';
 import { DocumentItem } from '@/types';
+import { PageHeader, EmptyState } from '@/components/ui';
 
 interface DocumentsViewProps {
   documents: DocumentItem[];
@@ -91,175 +94,150 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
   };
 
   return (
-    <div className="space-y-6 max-w-5xl">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            Kelola CV & Berkas Pelengkap
-          </h2>
-          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            Unggah satu CV utama sebagai dasar personalisasi, atau kompilasi beberapa dokumen menjadi satu PDF.
-          </p>
-        </div>
+    <div className="space-y-5 sm:space-y-6 max-w-6xl animate-fade-in">
+      <PageHeader
+        title="CV & Berkas"
+        subtitle="Satu CV utama jadi dasar personalisasi · kompilasi berkas jadi satu PDF"
+        action={
+          <button onClick={onOpenCompile} className="btn-primary btn-sm sm:!min-h-[44px] sm:!text-sm">
+            <Layers size={16} />
+            <span>Kompilasi Berkas</span>
+          </button>
+        }
+      />
 
-        <button
-          onClick={onOpenCompile}
-          className="flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-lg transition-colors shadow-sm min-h-[44px]"
-        >
-          <Layers size={16} />
-          <span>Kompilasi Berkas Terpadu</span>
-        </button>
-      </div>
-
-      {/* Upload Zone */}
-      <div className="bg-white dark:bg-[#161B22] border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-6 text-center hover:border-brand-500 transition-colors">
-        <Upload size={32} className="mx-auto text-brand-600 mb-2" />
-        <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-          Unggah Berkas Baru (PDF / DOCX)
+      {/* Zona unggah */}
+      <div className="card card-accent border-dashed !border-2 p-6 sm:p-8 text-center">
+        <span className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-b from-brand-500/15 to-brand-500/5 border border-brand-500/20 text-brand-500 dark:text-brand-300 flex items-center justify-center">
+          <Upload size={22} />
+        </span>
+        <h3 className="text-sm font-bold text-gray-900 dark:text-white mt-3">
+          Unggah berkas baru
         </h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">
-          Maksimal 10 MB per file. Teks akan diekstrak secara otomatis untuk kebutuhan personalisasi.
+        <p className="hint max-w-sm mx-auto">
+          PDF / DOCX, maksimal 10 MB. Teks diekstrak otomatis sebagai dasar bukti AI.
         </p>
-
-        <label className="mt-3 inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer transition-colors min-h-[44px]">
-          <span>{isUploading ? 'Memproses berkas...' : 'Pilih Berkas dari Komputer'}</span>
+        <label className="btn-secondary mt-4 cursor-pointer">
+          <span>{isUploading ? 'Memproses…' : 'Pilih berkas'}</span>
           <input
             type="file"
             accept=".pdf,.docx,.doc,image/*"
             onChange={handleUpload}
-            className="hidden"
+            className="sr-only"
+            aria-label="Pilih berkas untuk diunggah"
           />
         </label>
       </div>
 
-      {/* Document List */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider text-xs">
-          Daftar Berkas Tersimpan ({documents.length})
-        </h3>
-
+      {/* Daftar berkas */}
+      <div>
+        <p className="eyebrow mb-3">
+          Tersimpan ({documents.length})
+        </p>
         {documents.length === 0 ? (
-          <div className="bg-white dark:bg-[#161B22] border border-dashed border-gray-200 dark:border-gray-800 rounded-xl p-8 text-center space-y-2">
-            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Belum ada berkas tersimpan
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Mulai dengan mengunggah CV kamu di atas untuk dasar personalisasi lamaran.
-            </p>
-          </div>
+          <EmptyState
+            icon={FolderOpen}
+            title="Belum ada berkas"
+            description="Unggah CV-mu di atas — ia jadi fondasi setiap surat lamaran yang disusun."
+          />
         ) : (
-          <div className="grid grid-cols-1 gap-3">
+          <div className="space-y-2.5">
             {documents.map((doc) => (
-            <div
-              key={doc.id}
-              className={`bg-white dark:bg-[#161B22] border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors ${
-                doc.isPrimary
-                  ? 'border-brand-500/70 shadow-sm'
-                  : 'border-gray-200 dark:border-gray-800'
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                <div
-                  className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-                    doc.isPrimary
-                      ? 'bg-brand-50 text-brand-600 dark:bg-brand-900/40 dark:text-brand-300'
-                      : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'
-                  }`}
-                >
-                  <FileText size={20} />
-                </div>
-
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-gray-900 dark:text-white text-sm">
-                      {doc.displayName}
-                    </span>
-                    {doc.isPrimary && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300 border border-brand-200 dark:border-brand-800">
-                        <Star size={10} className="fill-brand-600 text-brand-600" />
-                        <span>CV Utama</span>
+              <article
+                key={doc.id}
+                className={`card p-4 flex flex-col sm:flex-row sm:items-center gap-3 transition-colors ${
+                  doc.isPrimary ? '!border-brand-500/50 dark:!border-brand-400/40 card-accent' : ''
+                }`}
+              >
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <span
+                    className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border ${
+                      doc.isPrimary
+                        ? 'bg-gradient-to-b from-brand-500/15 to-brand-500/5 border-brand-500/25 text-brand-500 dark:text-brand-300'
+                        : 'bg-gray-100 dark:bg-white/[0.05] border-gray-200 dark:border-white/[0.07] text-gray-500 dark:text-gray-400'
+                    }`}
+                  >
+                    <FileText size={20} />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="font-bold text-sm text-gray-900 dark:text-white truncate">
+                        {doc.displayName}
                       </span>
-                    )}
-                    <span className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
-                      {doc.label}
-                    </span>
+                      {doc.isPrimary && (
+                        <span className="badge-info">
+                          <Star size={10} className="fill-current" />
+                          CV Utama
+                        </span>
+                      )}
+                      <span className="badge-neutral !text-[10px] uppercase">{doc.label}</span>
+                    </div>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+                      {Math.round(doc.sizeBytes / 1024)} KB · {doc.pageCount} hlm ·{' '}
+                      {new Date(doc.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </p>
                   </div>
-
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    {Math.round(doc.sizeBytes / 1024)} KB · {doc.pageCount} halaman · Diunggah pada{' '}
-                    {new Date(doc.createdAt).toLocaleDateString('id-ID')}
-                  </p>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100 dark:border-gray-800 justify-end">
-                {!doc.isPrimary && (
+                <div className="flex items-center gap-1 sm:shrink-0 justify-end border-t sm:border-t-0 border-gray-100 dark:border-white/[0.06] pt-3 sm:pt-0">
+                  {!doc.isPrimary && (
+                    <button
+                      onClick={() => onSetPrimary(doc.id)}
+                      className="btn-ghost btn-sm"
+                    >
+                      Jadikan CV Utama
+                    </button>
+                  )}
                   <button
-                    onClick={() => onSetPrimary(doc.id)}
-                    className="text-xs font-semibold text-gray-600 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors min-h-[36px]"
+                    onClick={() => setSelectedDocText(doc)}
+                    title="Lihat teks terekstraksi"
+                    aria-label={`Lihat teks dari ${doc.displayName}`}
+                    className="btn-icon text-gray-400 hover:text-brand-500 dark:hover:text-brand-300 hover:bg-gray-100 dark:hover:bg-white/[0.06]"
                   >
-                    Jadikan CV Utama
+                    <Eye size={16} />
                   </button>
-                )}
-
-                <button
-                  onClick={() => setSelectedDocText(doc)}
-                  title="Lihat Teks Terekstraksi"
-                  aria-label={`Lihat teks terekstraksi dari ${doc.displayName}`}
-                  className="p-2 text-gray-500 hover:text-brand-600 dark:hover:text-brand-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                >
-                  <Eye size={16} />
-                </button>
-
-                {documents.length > 1 && (
-                  <button
-                    onClick={() => onDeleteDocument(doc.id)}
-                    title="Hapus Dokumen"
-                    aria-label={`Hapus dokumen ${doc.displayName}`}
-                    className="p-2 text-gray-400 hover:text-danger-600 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-900/20 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+                  {documents.length > 1 && (
+                    <button
+                      onClick={() => onDeleteDocument(doc.id)}
+                      title="Hapus dokumen"
+                      aria-label={`Hapus ${doc.displayName}`}
+                      className="btn-icon text-gray-400 hover:text-danger-500 dark:hover:text-danger-300 hover:bg-danger-50 dark:hover:bg-danger-900/20"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
         )}
       </div>
 
-      {/* Extracted Text Inspector Modal */}
+      {/* Modal inspeksi teks */}
       {selectedDocText && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm"
-        >
-          <div className="bg-white dark:bg-[#161B22] rounded-xl max-w-xl w-full max-h-[80vh] overflow-hidden flex flex-col border border-gray-200 dark:border-gray-800 shadow-2xl">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between bg-surface-1 dark:bg-[#0D1117]">
-              <div>
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">
-                  Teks Terekstraksi
-                </span>
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+        <div role="dialog" aria-modal="true" className="modal-backdrop" onClick={() => setSelectedDocText(null)}>
+          <div className="modal-panel max-w-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="min-w-0">
+                <span className="eyebrow block mb-1">Teks terekstraksi</span>
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white truncate">
                   {selectedDocText.displayName}
                 </h3>
               </div>
               <button
                 onClick={() => setSelectedDocText(null)}
-                aria-label="Tutup inspeksi teks"
-                className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Tutup"
+                className="btn-icon text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/[0.06] shrink-0"
               >
-                Tutup
+                <X size={18} />
               </button>
             </div>
-
-            <div className="p-6 overflow-y-auto space-y-2">
-              <div className="flex items-center gap-1.5 text-xs text-success-700 dark:text-success-300 font-semibold mb-2">
-                <CheckCircle size={14} />
-                <span>Teks ini digunakan sistem sebagai dasar bukti grounding AI.</span>
-              </div>
-              <pre className="text-xs bg-gray-50 dark:bg-gray-900/60 p-4 rounded-lg border border-gray-200 dark:border-gray-800 whitespace-pre-wrap font-mono text-gray-800 dark:text-gray-200 leading-relaxed">
+            <div className="modal-body space-y-3">
+              <p className="inline-flex items-center gap-1.5 text-xs text-success-700 dark:text-success-300 font-semibold">
+                <CheckCircle2 size={14} />
+                Teks ini jadi dasar bukti grounding AI.
+              </p>
+              <pre className="text-xs card-flat p-4 whitespace-pre-wrap font-mono text-gray-700 dark:text-gray-300 leading-relaxed max-h-[50vh] overflow-y-auto">
                 {selectedDocText.extractedText || 'Tidak ada teks terekstraksi.'}
               </pre>
             </div>

@@ -10,8 +10,11 @@ import {
   ArrowRight,
   Layers,
   Building,
+  Sparkles,
+  Inbox,
 } from 'lucide-react';
 import { Application, DocumentItem, EmailSettings, UserProfile } from '@/types';
+import { StatCard, StatusBadge, EmptyState, QuotaBar } from '@/components/ui';
 
 interface DashboardViewProps {
   profile: UserProfile;
@@ -22,6 +25,14 @@ interface DashboardViewProps {
   onOpenQueue: () => void;
   onOpenCompile: () => void;
   onReviewApp: (app: Application) => void;
+}
+
+function greeting(): string {
+  const h = new Date().getHours();
+  if (h < 11) return 'Selamat pagi';
+  if (h < 15) return 'Selamat siang';
+  if (h < 18) return 'Selamat sore';
+  return 'Selamat malam';
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -35,200 +46,235 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onReviewApp,
 }) => {
   const waitingApps = applications.filter((a) => a.status === 'menunggu_persetujuan');
-  const sentApps = applications.filter(
-    (a) => a.status === 'terkirim' || a.status === 'dibalas' || a.status === 'wawancara'
+  const sentApps = applications.filter((a) =>
+    ['terkirim', 'dibalas', 'wawancara', 'diterima'].includes(a.status)
   );
+  const repliedApps = applications.filter((a) =>
+    ['dibalas', 'wawancara', 'diterima'].includes(a.status)
+  );
+  const recentApps = [...applications]
+    .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
+    .slice(0, 3);
+  const quotaLeft = Math.max(0, emailSettings.dailyLimit - emailSettings.dailySentCount);
 
   return (
-    <div className="space-y-6 max-w-6xl">
-      {/* Welcome & Trust Banner */}
-      <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-xl p-5 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-brand-700 dark:text-brand-300 mb-1">
-            <ShieldCheck size={16} />
-            <span>Kendali Penuh Pelamar</span>
+    <div className="space-y-5 sm:space-y-6 max-w-6xl animate-fade-in">
+      {/* Hero sambutan */}
+      <div className="card card-accent p-5 sm:p-7 relative overflow-hidden">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-24 -right-24 w-72 h-72 rounded-full bg-brand-500/10 dark:bg-brand-400/10 blur-3xl"
+        />
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-xs font-semibold text-brand-600 dark:text-brand-300 mb-2">
+              <ShieldCheck size={15} strokeWidth={2.4} />
+              <span>Kendali penuh di tanganmu — tak ada lamaran terkirim tanpa persetujuanmu</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+              {greeting()},{' '}
+              <span className="text-gradient">{profile.fullName?.split(' ')[0] || 'Pencari Kerja'}</span>
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1.5 max-w-xl leading-relaxed">
+              {waitingApps.length > 0
+                ? `Ada ${waitingApps.length} lamaran menunggu tinjauanmu sebelum dikirim ke rekruter.`
+                : 'Semua lamaran sudah beres. Tambah lowongan baru untuk disiapkan surat lamarannya.'}
+            </p>
           </div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            Selamat datang, {profile.fullName || 'Pencari Kerja'}
-          </h2>
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1 max-w-xl">
-            Sistem membantu menyelaraskan CV dan surat lamaran berdasarkan lowongan. Setiap lamaran wajib kamu periksa dan setujui sebelum dikirim.
-          </p>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          <button
-            onClick={onOpenAddJob}
-            className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors shadow-sm min-h-[44px]"
-          >
-            <Plus size={16} />
-            <span>Tambah Lowongan</span>
-          </button>
-          <button
-            onClick={onOpenCompile}
-            className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors min-h-[44px]"
-          >
-            <Layers size={16} />
-            <span>Kompilasi Berkas</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <button onClick={onOpenAddJob} className="btn-primary">
+              <Plus size={16} strokeWidth={2.4} />
+              <span>Tambah Lowongan</span>
+            </button>
+            <button onClick={onOpenCompile} className="btn-secondary">
+              <Layers size={16} />
+              <span>Kompilasi Berkas</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Metrics Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Metric 1: Waiting Approvals */}
-        <div
-          onClick={onOpenQueue}
-          className="bg-white dark:bg-[#161B22] p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm cursor-pointer hover:border-brand-500 transition-colors"
-        >
-          <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-            <span>Menunggu Persetujuan</span>
-            <div className="w-8 h-8 rounded-lg bg-warning-50 dark:bg-warning-900/30 text-warning-700 dark:text-warning-300 flex items-center justify-center font-bold">
-              <Clock size={16} />
-            </div>
-          </div>
-          <div className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
-            {waitingApps.length}
-          </div>
-          <div className="text-[11px] text-brand-600 dark:text-brand-400 font-semibold mt-1 flex items-center gap-1">
-            <span>Buka antrean review</span>
-            <ArrowRight size={12} />
-          </div>
-        </div>
-
-        {/* Metric 2: Sent Applications */}
-        <div className="bg-white dark:bg-[#161B22] p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
-          <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-            <span>Lamaran Terkirim</span>
-            <div className="w-8 h-8 rounded-lg bg-success-50 dark:bg-success-900/30 text-success-700 dark:text-success-300 flex items-center justify-center font-bold">
-              <Send size={16} />
-            </div>
-          </div>
-          <div className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
-            {sentApps.length}
-          </div>
-          <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-            Melalui akun Gmail kamu
-          </div>
-        </div>
-
-        {/* Metric 3: Daily Quota */}
-        <div className="bg-white dark:bg-[#161B22] p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
-          <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-            <span>Kuota Kirim Hari Ini</span>
-            <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
-              {emailSettings.dailySentCount} / {emailSettings.dailyLimit}
+      {/* Metrik */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <StatCard
+          label="Menunggu Persetujuan"
+          value={waitingApps.length}
+          icon={Clock}
+          tone="warning"
+          onClick={waitingApps.length > 0 ? onOpenQueue : undefined}
+          hint={
+            waitingApps.length > 0 ? (
+              <span className="inline-flex items-center gap-1 font-semibold text-brand-600 dark:text-brand-300">
+                Buka antrean <ArrowRight size={12} />
+              </span>
+            ) : (
+              'Antrean kosong'
+            )
+          }
+        />
+        <StatCard
+          label="Terkirim"
+          value={sentApps.length}
+          icon={Send}
+          tone="success"
+          hint="Via akun Gmail kamu"
+        />
+        <StatCard
+          label="Dibalas / Wawancara"
+          value={repliedApps.length}
+          icon={Sparkles}
+          tone="brand"
+          hint="Respons positif rekruter"
+        />
+        <div className="card p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="eyebrow !tracking-[0.08em] normal-case font-semibold text-[12px]">
+              Kuota Hari Ini
+            </span>
+            <span className="text-xs font-bold text-gray-700 dark:text-gray-200 tabular-nums">
+              {emailSettings.dailySentCount}/{emailSettings.dailyLimit}
             </span>
           </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden mt-3">
-            <div
-              className="bg-brand-600 h-full transition-all"
-              style={{
-                width: `${Math.min(100, (emailSettings.dailySentCount / emailSettings.dailyLimit) * 100)}%`,
-              }}
-            />
+          <div className="mt-3">
+            <QuotaBar used={emailSettings.dailySentCount} limit={emailSettings.dailyLimit} />
           </div>
           <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-2">
-            Maksimal 20 email per hari
-          </div>
-        </div>
-
-        {/* Metric 4: Primary CV */}
-        <div className="bg-white dark:bg-[#161B22] p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
-          <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-            <span>CV Utama Aktif</span>
-            <FileCheck size={16} className="text-brand-600" />
-          </div>
-          <div className="text-sm font-bold text-gray-900 dark:text-white mt-2 truncate">
-            {primaryCv?.displayName || 'Belum ada CV'}
-          </div>
-          <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-            Dasar personalisasi berkas
+            {quotaLeft > 0 ? `Sisa ${quotaLeft} kiriman` : 'Kuota habis — lanjut besok'}
           </div>
         </div>
       </div>
 
-      {/* Waiting Approvals Section (Highest priority action) */}
-      <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-xl p-5 shadow-sm space-y-4">
-        <div className="flex items-center justify-between">
+      {/* Antrean prioritas */}
+      <div className="card p-5 sm:p-6 space-y-4">
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <h3 className="text-base font-bold text-gray-900 dark:text-white">
-              Lamaran Menunggu Persetujuan Kamu
+            <h3 className="text-base font-bold text-gray-900 dark:text-white tracking-tight">
+              Perlu Tinjauanmu
             </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Periksa isi surat dan kecocokan klaim sebelum mengizinkan pengiriman.
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              Periksa isi surat & kecocokan klaim sebelum mengizinkan pengiriman.
             </p>
           </div>
           {waitingApps.length > 0 && (
             <button
               onClick={onOpenQueue}
-              className="text-xs font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400 flex items-center gap-1"
+              className="text-xs font-semibold text-brand-600 dark:text-brand-300 hover:underline flex items-center gap-1 shrink-0 min-h-[36px]"
             >
-              <span>Lihat semua ({waitingApps.length})</span>
-              <ArrowRight size={14} />
+              Lihat semua ({waitingApps.length}) <ArrowRight size={14} />
             </button>
           )}
         </div>
 
         {waitingApps.length === 0 ? (
-          <div className="text-center py-8 border border-dashed border-gray-200 dark:border-gray-800 rounded-lg">
-            <Clock size={32} className="mx-auto text-gray-400 mb-2" />
-            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Tidak ada lamaran yang menunggu persetujuan.
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Tempel tautan lowongan baru untuk menyiapkan lamaran terpersonalisasi.
-            </p>
-            <button
-              onClick={onOpenAddJob}
-              className="mt-3 inline-flex items-center gap-1.5 bg-brand-600 text-white text-xs font-semibold px-4 py-2 rounded-lg hover:bg-brand-700 transition-colors"
-            >
-              <Plus size={14} />
-              <span>Tambah Lowongan Sekarang</span>
-            </button>
-          </div>
+          <EmptyState
+            icon={Inbox}
+            title="Antrean review kosong"
+            description="Tempel tautan lowongan baru — sistem menyiapkan surat lamaran terpersonalisasi untuk kamu tinjau."
+            action={
+              <button onClick={onOpenAddJob} className="btn-primary btn-sm">
+                <Plus size={14} /> Tambah Lowongan
+              </button>
+            }
+          />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-            {waitingApps.slice(0, 4).map((app) => (
-              <div
-                key={app.id}
-                className="bg-surface-1 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-800 rounded-lg p-4 flex flex-col justify-between space-y-3"
-              >
-                <div>
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-xs font-bold text-gray-900 dark:text-white">
-                      {app.jobTitle}
-                    </span>
-                    <span className="text-[10px] bg-warning-50 text-warning-700 border border-warning-200 font-semibold px-2 py-0.5 rounded-full shrink-0">
-                      Menunggu Approval
-                    </span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {waitingApps.slice(0, 4).map((app) => {
+              const unconfirmed = app.claims.filter((c) => c.status === 'unconfirmed').length;
+              return (
+                <div key={app.id} className="card-flat p-4 flex flex-col gap-3">
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-sm font-bold text-gray-900 dark:text-white leading-snug">
+                        {app.jobTitle}
+                      </span>
+                      <StatusBadge status={app.status} />
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mt-1.5">
+                      <Building size={12} />
+                      <span className="font-medium text-gray-700 dark:text-gray-300">{app.company}</span>
+                      <span aria-hidden>·</span>
+                      <span className="truncate">{app.recipientEmail}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 mt-1">
-                    <Building size={12} />
-                    <span>{app.company}</span>
-                  </div>
-                  <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-                    Penerima: {app.recipientEmail}
-                  </div>
+                  {unconfirmed > 0 && (
+                    <div className="badge-warning self-start">
+                      {unconfirmed} klaim baru perlu dikonfirmasi
+                    </div>
+                  )}
+                  <button
+                    onClick={() => onReviewApp(app)}
+                    className="btn-secondary btn-sm w-full"
+                  >
+                    Tinjau & Setujui <ArrowRight size={14} />
+                  </button>
                 </div>
-
-                {app.claims.filter((c) => c.status === 'unconfirmed').length > 0 && (
-                  <div className="text-[11px] bg-warning-50 dark:bg-warning-900/30 text-warning-800 dark:text-warning-300 px-2.5 py-1 rounded border border-warning-200 dark:border-warning-800">
-                    Ada klaim baru yang wajib kamu konfirmasi.
-                  </div>
-                )}
-
-                <button
-                  onClick={() => onReviewApp(app)}
-                  className="w-full flex items-center justify-center gap-1.5 bg-white dark:bg-gray-800 hover:bg-brand-50 hover:text-brand-700 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs font-semibold py-2 px-3 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors min-h-[40px]"
-                >
-                  <span>Tinjau & Setujui</span>
-                  <ArrowRight size={14} />
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
+      </div>
+
+      {/* Aktivitas terakhir + CV */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4">
+        <div className="card p-5 sm:p-6 lg:col-span-3">
+          <h3 className="text-base font-bold text-gray-900 dark:text-white tracking-tight mb-1">
+            Aktivitas Terakhir
+          </h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+            Lamaran yang baru kamu buat atau kirim.
+          </p>
+          {recentApps.length === 0 ? (
+            <p className="text-xs text-gray-500 dark:text-gray-400 py-4 text-center border border-dashed border-gray-200 dark:border-white/[0.08] rounded-xl">
+              Belum ada aktivitas. Mulai dari menambah lowongan.
+            </p>
+          ) : (
+            <ul className="divide-y divide-gray-100 dark:divide-white/[0.06]">
+              {recentApps.map((app) => (
+                <li key={app.id}>
+                  <button
+                    onClick={() => onReviewApp(app)}
+                    className="w-full flex items-center justify-between gap-3 py-3 text-left group min-h-[44px]"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-brand-600 dark:group-hover:text-brand-300 transition-colors">
+                        {app.jobTitle}
+                      </div>
+                      <div className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                        {app.company} · {new Date(app.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                      </div>
+                    </div>
+                    <StatusBadge status={app.status} className="shrink-0" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="card p-5 sm:p-6 lg:col-span-2 flex flex-col">
+          <h3 className="text-base font-bold text-gray-900 dark:text-white tracking-tight mb-1">
+            CV Utama
+          </h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+            Dasar personalisasi semua surat lamaran.
+          </p>
+          <div className="flex items-start gap-3 card-flat p-3.5 flex-1">
+            <span className="w-10 h-10 rounded-xl bg-gradient-to-b from-brand-500/15 to-brand-500/5 border border-brand-200/60 dark:border-brand-800/50 text-brand-600 dark:text-brand-300 flex items-center justify-center shrink-0">
+              <FileCheck size={19} />
+            </span>
+            <div className="min-w-0">
+              <div className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                {primaryCv?.displayName || 'Belum ada CV'}
+              </div>
+              <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                {primaryCv
+                  ? `${Math.round(primaryCv.sizeBytes / 1024)} KB · dasar bukti grounding AI`
+                  : 'Unggah CV di menu CV & Berkas'}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

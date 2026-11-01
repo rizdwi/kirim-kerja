@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Briefcase, Send, Clock, Menu, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Compass, Briefcase, Clock, Menu } from 'lucide-react';
 
 interface BottomNavProps {
   currentTab: string;
@@ -15,9 +15,9 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   waitingCount,
 }) => {
   const tabs = [
-    { id: 'dashboard', label: 'Beranda', icon: Briefcase },
-    { id: 'explore', label: 'Jelajah', icon: Sparkles },
-    { id: 'jobs', label: 'Lowongan', icon: Send },
+    { id: 'dashboard', label: 'Beranda', icon: LayoutDashboard },
+    { id: 'explore', label: 'Jelajah', icon: Compass },
+    { id: 'jobs', label: 'Lowongan', icon: Briefcase },
     {
       id: 'queue',
       label: 'Antrean',
@@ -29,10 +29,11 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
   return (
     <nav
-      aria-label="Navigasi Bawah Ponsel"
-      className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-[#161B22] border-t border-gray-200 dark:border-gray-800 z-40 px-2 py-1 shadow-lg"
+      aria-label="Navigasi bawah"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-[#0D1117]/90 backdrop-blur-md border-t border-gray-200/80 dark:border-white/[0.08] px-2 pt-1 safe-bottom"
+      style={{ boxShadow: '0 -8px 24px rgb(16 24 40 / 0.06)' }}
     >
-      <div className="flex items-center justify-around">
+      <div className="flex items-stretch justify-around max-w-md mx-auto">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive =
@@ -49,21 +50,28 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                   onTabChange(tab.id);
                 }
               }}
-              className={`flex-1 flex flex-col items-center justify-center py-2 min-h-[48px] rounded-lg transition-colors relative ${
+              aria-current={isActive ? 'page' : undefined}
+              className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 min-h-[56px] rounded-xl transition-all duration-150 relative active:scale-95 ${
                 isActive
-                  ? 'text-brand-600 dark:text-brand-400 font-semibold'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                  ? 'text-brand-600 dark:text-brand-300 font-bold'
+                  : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-medium'
               }`}
             >
-              <div className="relative">
-                <Icon size={20} />
+              {isActive && (
+                <span
+                  aria-hidden
+                  className="absolute top-0.5 w-8 h-1 rounded-full bg-gradient-to-r from-brand-500 to-brand-400"
+                />
+              )}
+              <span className="relative">
+                <Icon size={21} strokeWidth={isActive ? 2.4 : 2} />
                 {tab.badge !== undefined && (
-                  <span className="absolute -top-1.5 -right-2.5 bg-warning-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                  <span className="absolute -top-1.5 -right-2.5 bg-gradient-to-b from-warning-400 to-warning-600 text-white text-[10px] min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center font-bold tabular-nums shadow-card">
                     {tab.badge}
                   </span>
                 )}
-              </div>
-              <span className="text-[11px] mt-1">{tab.label}</span>
+              </span>
+              <span className="text-[10px] leading-none">{tab.label}</span>
             </button>
           );
         })}

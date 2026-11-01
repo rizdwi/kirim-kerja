@@ -22,54 +22,53 @@ export const Header: React.FC<HeaderProps> = ({
   onLogout,
 }) => {
   return (
-    <header className="bg-white dark:bg-[#161B22] border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sticky top-0 z-30">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+    <header className="bg-white/85 dark:bg-[#0D1117]/85 backdrop-blur-md border-b border-gray-200/80 dark:border-white/[0.07] px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-3 sticky top-0 z-30">
+      <div className="min-w-0">
+        <h1 className="text-lg sm:text-xl font-extrabold text-gray-900 dark:text-white tracking-tight truncate">
           {title}
         </h1>
         {subtitle && (
-          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+          <p className="hidden sm:block text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
             {subtitle}
           </p>
         )}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         {/* Gmail Status Badge */}
         {emailSettings.gmailConnected ? (
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-success-50 dark:bg-success-900/30 text-success-700 dark:text-success-300 text-xs font-medium border border-success-200 dark:border-success-800">
-            <CheckCircle2 size={14} className="text-success-600 dark:text-success-400" />
-            <span>Gmail: {emailSettings.gmailEmail}</span>
+          <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-success-50 dark:bg-success-900/25 text-success-700 dark:text-success-300 text-xs font-semibold border border-success-200/70 dark:border-success-800/60">
+            <CheckCircle2 size={14} />
+            <span className="max-w-[180px] truncate">{emailSettings.gmailEmail}</span>
           </div>
         ) : (
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-warning-50 dark:bg-warning-900/30 text-warning-700 dark:text-warning-300 text-xs font-medium border border-warning-200 dark:border-warning-800">
-            <ShieldAlert size={14} className="text-warning-600" />
-            <span>Gmail Belum Terhubung</span>
+          <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-warning-50 dark:bg-warning-900/25 text-warning-700 dark:text-warning-300 text-xs font-semibold border border-warning-200/70 dark:border-warning-800/60">
+            <ShieldAlert size={14} />
+            <span>Gmail belum terhubung</span>
           </div>
         )}
 
         {/* Primary CTA */}
-        <button
-          onClick={onOpenAddJob}
-          className="flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 min-h-[44px]"
-        >
-          <Plus size={16} />
-          <span>Tambah Lowongan</span>
+        <button onClick={onOpenAddJob} className="btn-primary btn-sm sm:!min-h-[44px] sm:!text-sm sm:!px-4">
+          <Plus size={16} strokeWidth={2.5} />
+          <span className="hidden sm:inline">Tambah Lowongan</span>
+          <span className="sm:hidden">Tambah</span>
         </button>
 
         {/* User initials & Logout */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           <div
             title={profile.fullName || 'Profil Pelamar'}
-            className="w-9 h-9 rounded-full bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 flex items-center justify-center font-bold text-sm border border-brand-200 dark:border-brand-700 shrink-0 select-none"
+            className="w-9 h-9 rounded-full bg-gradient-to-b from-brand-500/20 to-brand-500/5 border border-brand-200/70 dark:border-brand-700/60 text-brand-700 dark:text-brand-300 flex items-center justify-center font-bold text-xs select-none"
           >
             {profile.fullName ? profile.fullName.slice(0, 2).toUpperCase() : 'KK'}
           </div>
           {onLogout && (
             <button
               onClick={onLogout}
-              className="p-2 text-gray-400 hover:text-danger-600 dark:hover:text-danger-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="btn-icon text-gray-400 hover:text-danger-500 dark:hover:text-danger-300 hover:bg-gray-100 dark:hover:bg-white/[0.06]"
               title="Keluar dari akun"
+              aria-label="Keluar dari akun"
             >
               <LogOut size={16} />
             </button>
