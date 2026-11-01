@@ -10,6 +10,8 @@ import {
   Sun,
   Moon,
   ExternalLink,
+  Sparkles,
+  LogOut,
 } from 'lucide-react';
 import { EmailSettings } from '@/types';
 
@@ -21,6 +23,7 @@ interface SidebarProps {
   darkMode: boolean;
   onToggleDarkMode: () => void;
   onOpenLanding: () => void;
+  onLogout?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -31,10 +34,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   darkMode,
   onToggleDarkMode,
   onOpenLanding,
+  onLogout,
 }) => {
   const navItems = [
     { id: 'dashboard', label: 'Beranda', icon: Briefcase },
-    { id: 'jobs', label: 'Lowongan', icon: Send },
+    { id: 'explore', label: 'Jelajah Lowongan', icon: Sparkles },
+    { id: 'jobs', label: 'Lowongan Saya', icon: Send },
     {
       id: 'queue',
       label: 'Antrean Lamaran',
@@ -133,16 +138,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </p>
         </div>
 
-        {/* Action buttons: Theme toggle & Landing Page */}
+        {/* Action buttons: Theme toggle & Landing Page & Logout */}
         <div className="flex items-center justify-between pt-1">
           <button
             onClick={onToggleDarkMode}
             aria-label={darkMode ? 'Beralih ke mode terang' : 'Beralih ke mode gelap'}
-            className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 min-h-[44px]"
+            className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 min-h-[44px]"
           >
-            {darkMode ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} />}
-            <span>{darkMode ? 'Mode Terang' : 'Mode Gelap'}</span>
+            {darkMode ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} />}
+            <span className="hidden sm:inline">{darkMode ? 'Terang' : 'Gelap'}</span>
           </button>
+
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="flex items-center gap-1 text-xs text-danger-600 hover:text-danger-700 dark:text-danger-400 p-2 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-900/30 min-h-[44px]"
+              title="Keluar dari sesi akun"
+            >
+              <LogOut size={14} />
+              <span>Keluar</span>
+            </button>
+          )}
 
           <button
             onClick={onOpenLanding}

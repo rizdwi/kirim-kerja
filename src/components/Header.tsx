@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Plus, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { Plus, CheckCircle2, ShieldAlert, LogOut } from 'lucide-react';
 import { EmailSettings, UserProfile } from '@/types';
 
 interface HeaderProps {
@@ -10,6 +10,7 @@ interface HeaderProps {
   profile: UserProfile;
   emailSettings: EmailSettings;
   onOpenAddJob: () => void;
+  onLogout?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -18,6 +19,7 @@ export const Header: React.FC<HeaderProps> = ({
   profile,
   emailSettings,
   onOpenAddJob,
+  onLogout,
 }) => {
   return (
     <header className="bg-white dark:bg-[#161B22] border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sticky top-0 z-30">
@@ -55,12 +57,23 @@ export const Header: React.FC<HeaderProps> = ({
           <span>Tambah Lowongan</span>
         </button>
 
-        {/* User initials */}
-        <div
-          title={profile.fullName || 'Profil Pelamar'}
-          className="w-9 h-9 rounded-full bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 flex items-center justify-center font-bold text-sm border border-brand-200 dark:border-brand-700 shrink-0 select-none"
-        >
-          {profile.fullName ? profile.fullName.slice(0, 2).toUpperCase() : 'KK'}
+        {/* User initials & Logout */}
+        <div className="flex items-center gap-1.5">
+          <div
+            title={profile.fullName || 'Profil Pelamar'}
+            className="w-9 h-9 rounded-full bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 flex items-center justify-center font-bold text-sm border border-brand-200 dark:border-brand-700 shrink-0 select-none"
+          >
+            {profile.fullName ? profile.fullName.slice(0, 2).toUpperCase() : 'KK'}
+          </div>
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="p-2 text-gray-400 hover:text-danger-600 dark:hover:text-danger-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+              title="Keluar dari akun"
+            >
+              <LogOut size={16} />
+            </button>
+          )}
         </div>
       </div>
     </header>

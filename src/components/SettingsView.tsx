@@ -8,7 +8,7 @@ import {
   Download,
   Trash2,
   CheckCircle2,
-  RefreshCw,
+  Clock,
   AlertTriangle,
 } from 'lucide-react';
 import { UserProfile, EmailSettings } from '@/types';
@@ -218,6 +218,46 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           >
             {emailSettings.gmailConnected ? 'Cabut Akses' : 'Hubungkan Gmail'}
           </button>
+        </div>
+      </div>
+
+      {/* Daily Apply Limit (15 - 18 max per day) */}
+      <div className="bg-white dark:bg-[#161B22] border border-gray-200 dark:border-gray-800 rounded-xl p-5 shadow-sm space-y-4">
+        <div className="flex items-center gap-2 border-b border-gray-100 dark:border-gray-800 pb-3">
+          <Clock size={18} className="text-brand-600" />
+          <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+            Batas Pengiriman Harian (Anti-Spam Gmail)
+          </h3>
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+            Atur batas maksimal lamaran terkirim per hari (antara 15 sampai 18 email). Pembatasan ini menjaga agar akun Gmail kamu tidak dianggap mengirim spam oleh filter email rekruter.
+          </p>
+          <div className="flex flex-wrap items-center gap-2.5">
+            {[15, 16, 17, 18].map((limitVal) => (
+              <button
+                key={limitVal}
+                type="button"
+                onClick={() =>
+                  onSaveEmailSettings({
+                    ...emailSettings,
+                    dailyLimit: limitVal,
+                  })
+                }
+                className={`px-4 py-2 text-xs font-bold rounded-lg border transition-colors min-h-[44px] ${
+                  emailSettings.dailyLimit === limitVal
+                    ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
+                    : 'bg-surface-1 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {limitVal} Email / Hari
+              </button>
+            ))}
+          </div>
+          <span className="text-[11px] text-gray-500 dark:text-gray-400 block pt-1">
+            Saat ini terkirim: {emailSettings.dailySentCount} dari {emailSettings.dailyLimit} kuota hari ini.
+          </span>
         </div>
       </div>
 

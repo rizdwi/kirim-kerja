@@ -30,7 +30,7 @@ export const JobIngestModal: React.FC<JobIngestModalProps> = ({
   primaryCv,
   onJobCreated,
 }) => {
-  const [activeTab, setActiveTab] = useState<'url' | 'text'>('url');
+  const [activeTab, setActiveTab] = useState<'url' | 'text' | 'portal'>('url');
   const [urlInput, setUrlInput] = useState('');
   const [textInput, setTextInput] = useState('');
   const [loadingStage, setLoadingStage] = useState<string | null>(null);
@@ -176,37 +176,88 @@ export const JobIngestModal: React.FC<JobIngestModalProps> = ({
 
         {/* Modal Content */}
         <div className="p-6 space-y-5 overflow-y-auto max-h-[75vh]">
-          {/* Tabs: URL vs Raw Text */}
-          <div className="flex border-b border-gray-200 dark:border-gray-800">
+          {/* Tabs: URL vs Raw Text vs Portal Importer */}
+          <div className="flex border-b border-gray-200 dark:border-gray-800 overflow-x-auto">
             <button
               onClick={() => {
                 setActiveTab('url');
                 setErrorMessage(null);
               }}
-              className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors min-h-[44px] ${
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors shrink-0 min-h-[44px] ${
                 activeTab === 'url'
                   ? 'border-brand-600 text-brand-600 dark:text-brand-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               <LinkIcon size={14} />
-              <span>Tempel Tautan Lowongan</span>
+              <span>Tempel Tautan</span>
             </button>
             <button
               onClick={() => {
                 setActiveTab('text');
                 setErrorMessage(null);
               }}
-              className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors min-h-[44px] ${
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors shrink-0 min-h-[44px] ${
                 activeTab === 'text'
                   ? 'border-brand-600 text-brand-600 dark:text-brand-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               <FileText size={14} />
-              <span>Tempel Teks Manual</span>
+              <span>Tempel Teks</span>
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('portal');
+                setErrorMessage(null);
+              }}
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors shrink-0 min-h-[44px] ${
+                activeTab === 'portal'
+                  ? 'border-brand-600 text-brand-600 dark:text-brand-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              <Building size={14} />
+              <span>Portal Kerja (Jobstreet, LinkedIn, dll)</span>
             </button>
           </div>
+
+          {/* Tab 3: Portal Importer Guidance & Quick Import */}
+          {activeTab === 'portal' && (
+            <div className="space-y-4">
+              <div className="p-4 bg-brand-50/60 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 rounded-xl space-y-2">
+                <h3 className="text-xs font-bold text-brand-800 dark:text-brand-200">
+                  Panduan Impor Sesi Akun LinkedIn, Jobstreet, Indeed, & Meta
+                </h3>
+                <p className="text-xs text-brand-700 dark:text-brand-300 leading-relaxed">
+                  Platform karir ini menerapkan proteksi login 2FA dan anti-bot ketat. Untuk mencegah akun asli kamu terkunci oleh sistem keamanan mereka, gunakan sesi login kamu sendiri di browser:
+                </p>
+                <ol className="list-decimal list-inside text-xs text-brand-700 dark:text-brand-300 space-y-1 pt-1">
+                  <li>Buka lowongan pada akun Jobstreet, LinkedIn, Indeed, atau Meta yang sudah kamu login.</li>
+                  <li>Salin alamat tautan atau teks lowongannya.</li>
+                  <li>Tempelkan ke tab <strong>Tempel Tautan</strong> atau <strong>Tempel Teks</strong> untuk dianalisis oleh KirimKerja.</li>
+                  <li><span className="font-semibold text-danger-600 dark:text-danger-400">Catatan:</span> Lowongan dari Glint dan KitaLulus diblokir otomatis oleh sistem.</li>
+                </ol>
+              </div>
+
+              <div className="flex items-center justify-between pt-1">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('url')}
+                  className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-semibold transition-colors min-h-[44px]"
+                >
+                  Lanjut ke Tempel Tautan
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('text')}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-lg text-xs font-semibold transition-colors min-h-[44px]"
+                >
+                  Lanjut ke Tempel Teks Manual
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Tab 1: URL input */}
           {activeTab === 'url' && (

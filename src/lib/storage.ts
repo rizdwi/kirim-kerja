@@ -39,7 +39,7 @@ const INITIAL_EMAIL_SETTINGS: EmailSettings = {
   gmailConnected: false,
   gmailEmail: '',
   dailySentCount: 0,
-  dailyLimit: 20,
+  dailyLimit: 18,
   lastResetDate: new Date().toISOString().split('T')[0],
   sendingMode: 'web_compose',
 };
@@ -194,6 +194,11 @@ export const StorageService = {
     if (settings.lastResetDate !== today) {
       settings.dailySentCount = 0;
       settings.lastResetDate = today;
+      safeSet(STORAGE_KEYS.EMAIL_SETTINGS, settings);
+    }
+    // Enforce 15-18 limit range
+    if (!settings.dailyLimit || settings.dailyLimit > 18 || settings.dailyLimit < 15) {
+      settings.dailyLimit = 18;
       safeSet(STORAGE_KEYS.EMAIL_SETTINGS, settings);
     }
     return settings;

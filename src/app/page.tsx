@@ -11,6 +11,8 @@ import { TrackingView } from '@/components/TrackingView';
 import { DocumentsView } from '@/components/DocumentsView';
 import { SettingsView } from '@/components/SettingsView';
 import { LandingView } from '@/components/LandingView';
+import { AuthView } from '@/components/AuthView';
+import { ExploreJobsView } from '@/components/ExploreJobsView';
 import { ReviewModal } from '@/components/ReviewModal';
 import { JobIngestModal } from '@/components/JobIngestModal';
 import { CompileModal } from '@/components/CompileModal';
@@ -30,6 +32,7 @@ export default function Home() {
   const [showLanding, setShowLanding] = useState<boolean>(false);
   const [darkMode, setDarkMode] = useState<boolean>(false);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 
   // Core App States
   const [profile, setProfile] = useState<UserProfile>(StorageService.getProfile());
@@ -45,11 +48,20 @@ export default function Home() {
 
   // Initialize from storage on client mount
   useEffect(() => {
-    setProfile(StorageService.getProfile());
+    const prof = StorageService.getProfile();
+    setProfile(prof);
     setDocuments(StorageService.getDocuments());
     setJobs(StorageService.getJobs());
     setApplications(StorageService.getApplications());
     setEmailSettings(StorageService.getEmailSettings());
+
+    const loggedInFlag = localStorage.getItem('kirimkerja_logged_in');
+    if (loggedInFlag === 'true' && prof?.email) {
+      setIsLoggedIn(true);
+    } else {
+      setIsLoggedIn(false);
+    }
+
     setIsLoaded(true);
 
     // Read stored theme preference
@@ -75,6 +87,26 @@ export default function Home() {
   // Primary CV
   const primaryCv = documents.find((d) => d.isPrimary) || documents[0];
 
+  // Auth Handlers
+  const handleAuthSuccess = (
+    newProfile: Partial<UserProfile>,
+    newEmail: Partial<EmailSettings>
+  ) => {
+    const updatedProfile = { ...profile, ...newProfile };
+    const updatedEmail = { ...emailSettings, ...newEmail };
+    StorageService.saveProfile(updatedProfile);
+    StorageService.saveEmailSettings(updatedEmail);
+    setProfile(updatedProfile);
+    setEmailSettings(updatedEmail);
+    setIsLoggedIn(true);
+    localStorage.setItem('kirimkerja_logged_in', 'true');
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('kirimkerja_logged_in');
+    setIsLoggedIn(false);
+  };
+
   // Handlers for Applications
   const handleApproveAndSend = async (
     appId: string,
@@ -83,6 +115,14 @@ export default function Home() {
     coverLetter: string,
     attachmentDocId: string
   ) => {
+    // Strict daily limit check (15 - 18 max per day)
+    if (emailSettings.dailySentCount >= emailSettings.dailyLimit) {
+      alert(
+        `Batas maksimal pengiriman harian (${emailSettings.dailyLimit} lamaran/hari) telah tercapai untuk menjaga reputasi akun Gmail kamu. Sisa lamaran dapat disetujui dan dikirimkan esok hari.`
+      );
+      return;
+    }
+
     const selectedDoc = documents.find((d) => d.id === attachmentDocId) || primaryCv || {
       displayName: 'CV.pdf',
     };
@@ -257,6 +297,11 @@ export default function Home() {
     return <LandingView onEnterApp={() => setShowLanding(false)} />;
   }
 
+  // Auth Gateway (Sebelum masuk app)
+  if (!isLoggedIn) {
+    return <AuthView onSuccess={handleAuthSuccess} />;
+  }
+
   const waitingCount = applications.filter((a) => a.status === 'menunggu_persetujuan').length;
 
   const getPageTitle = () => {
@@ -266,9 +311,14 @@ export default function Home() {
           title: 'Beranda Kerja',
           subtitle: 'Ringkasan antrean lamaran dan status pengiriman.',
         };
+      case 'explore':
+        return {
+          title: 'Jelajah Lowongan Real-Time',
+          subtitle: 'Daftar lowongan kerja teragregasi otomatis secara berkala.',
+        };
       case 'jobs':
         return {
-          title: 'Lowongan',
+          title: 'Lowongan Saya',
           subtitle: 'Daftar lowongan kerja yang telah kamu kumpulkan.',
         };
       case 'queue':
@@ -313,6 +363,7 @@ export default function Home() {
           darkMode={darkMode}
           onToggleDarkMode={handleToggleDarkMode}
           onOpenLanding={() => setShowLanding(true)}
+          onLogout={handleLogout}
         />
       </div>
 
@@ -324,6 +375,7 @@ export default function Home() {
           profile={profile}
           emailSettings={emailSettings}
           onOpenAddJob={() => setIsAddJobOpen(true)}
+          onLogout={handleLogout}
         />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
@@ -337,6 +389,17 @@ export default function Home() {
               onOpenQueue={() => setCurrentTab('queue')}
               onOpenCompile={() => setIsCompileOpen(true)}
               onReviewApp={(app) => setReviewApp(app)}
+            />
+          )}
+
+          {currentTab === 'explore' && (
+            <ExploreJobsView
+              profile={profile}
+              primaryCv={primaryCv}
+              onApplyJob={(job, cl, subj, sects, claims) => {
+                handleJobCreated(job, cl, subj, sects, claims);
+                setCurrentTab('queue');
+              }}
             />
           )}
 

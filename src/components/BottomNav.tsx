@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Briefcase, Send, Clock, Menu } from 'lucide-react';
+import { Briefcase, Send, Clock, Menu, Sparkles } from 'lucide-react';
 
 interface BottomNavProps {
   currentTab: string;
@@ -16,6 +16,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 }) => {
   const tabs = [
     { id: 'dashboard', label: 'Beranda', icon: Briefcase },
+    { id: 'explore', label: 'Jelajah', icon: Sparkles },
     { id: 'jobs', label: 'Lowongan', icon: Send },
     {
       id: 'queue',
