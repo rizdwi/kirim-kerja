@@ -50,7 +50,8 @@ export interface JobPost {
   contactEmail?: string;
   applyUrl?: string;
   extractionStatus: 'berhasil' | 'perlu_dicek' | 'gagal' | 'butuh_input_manual';
-  confidenceLabel: 'Terdeteksi otomatis' | 'Perlu dicek';
+  confidenceLabel: 'Terdeteksi otomatis' | 'Perlu dicek' | string;
+  regionTag?: string;
   fetchedAt: string;
 }
 

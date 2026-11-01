@@ -70,6 +70,10 @@ function safeGet<T>(key: string, fallback: T): T {
       localStorage.removeItem(key);
       return fallback;
     }
+    if (key === STORAGE_KEYS.EMAIL_SETTINGS && parsed?.gmailEmail === 'pengguna.gmail@gmail.com') {
+      localStorage.removeItem(key);
+      return fallback;
+    }
 
     return parsed;
   } catch {

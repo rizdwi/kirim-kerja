@@ -40,7 +40,17 @@ export const ExploreJobsView: React.FC<ExploreJobsViewProps> = ({
   const [appliedJobIds, setAppliedJobIds] = useState<string[]>([]);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  const presets = ['Semua', 'Frontend', 'Fullstack', 'Admin', 'Marketing', 'Designer', 'Remote'];
+  const presets = [
+    'Semua',
+    'Jakarta',
+    'Surabaya',
+    'Bandung',
+    'Frontend',
+    'Admin',
+    'Marketing',
+    'Remote',
+    'Visa Ditanggung',
+  ];
 
   const fetchExploreJobs = async (searchKeyword = query) => {
     setIsLoading(true);
@@ -211,8 +221,16 @@ export const ExploreJobsView: React.FC<ExploreJobsViewProps> = ({
                     <h3 className="text-base font-bold text-gray-900 dark:text-white line-clamp-1">
                       {job.title}
                     </h3>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shrink-0">
-                      Live Feed
+                    <span
+                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border shrink-0 ${
+                        job.confidenceLabel?.includes('Lokal') || job.confidenceLabel?.includes('Indonesia')
+                          ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                          : job.confidenceLabel?.includes('Visa')
+                          ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800'
+                          : 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                      }`}
+                    >
+                      {job.confidenceLabel || 'Lokal Indonesia'}
                     </span>
                   </div>
 
