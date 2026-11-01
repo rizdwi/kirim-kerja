@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { JobPost } from '@/types';
 
-// Helper to filter banned domains
+// Helper to filter banned domains (Glints & KitaLulus — user ban, permanent)
 function isBannedSource(urlOrText: string): boolean {
   const lower = urlOrText.toLowerCase();
   return (
@@ -12,83 +12,113 @@ function isBannedSource(urlOrText: string): boolean {
   );
 }
 
-// Strict location validation per user rule:
-// 1. Region Indonesia (Lokal)
-// 2. Luar negeri HANYA jika ada opsi Remote atau mencantumkan seluruh biaya visa/tiket/akomodasi ditanggung.
+// STRICT region whitelist (user order 2026-11-02):
+// Jabodetabek + Karawang/Cikarang/Cikampek/Purwakarta/Subang
+// + Bandung/Cimahi/Cianjur/Sukabumi + Serang/Cilegon.
+// Everything else (Batam, Lombok, Aceh, Kalimantan, Surabaya, etc.) = rejected.
+const ALLOWED_REGIONS: Array<{ key: string; label: string }> = [
+  { key: 'jakarta', label: 'Jakarta' },
+  { key: 'bogor', label: 'Bogor' },
+  { key: 'depok', label: 'Depok' },
+  { key: 'tangerang', label: 'Tangerang' },
+  { key: 'bekasi', label: 'Bekasi' },
+  { key: 'karawang', label: 'Karawang' },
+  { key: 'cikarang', label: 'Cikarang' },
+  { key: 'cikampek', label: 'Cikampek' },
+  { key: 'purwakarta', label: 'Purwakarta' },
+  { key: 'subang', label: 'Subang' },
+  { key: 'bandung', label: 'Bandung' },
+  { key: 'cimahi', label: 'Cimahi' },
+  { key: 'cianjur', label: 'Cianjur' },
+  { key: 'sukabumi', label: 'Sukabumi' },
+  { key: 'serang', label: 'Serang' },
+  { key: 'cilegon', label: 'Cilegon' },
+];
+
 function isValidJobLocation(loc: string, desc: string, title: string): boolean {
   const text = `${loc} ${desc} ${title}`.toLowerCase();
+  const locLower = loc.toLowerCase();
+  const descLower = desc.toLowerCase();
+  const titleLower = title.toLowerCase();
 
-  // 1. Indonesia regions & cities
-  const indonesianLocations = [
-    'indonesia',
-    'jakarta',
-    'bandung',
-    'surabaya',
-    'yogyakarta',
-    'jogja',
-    'semarang',
-    'medan',
-    'bali',
-    'denpasar',
-    'tangerang',
-    'bekasi',
-    'depok',
-    'bogor',
-    'malang',
-    'solo',
-    'surakarta',
-    'makassar',
-    'palembang',
-    'batam',
-    'pekanbaru',
-    'balikpapan',
-    'samarinda',
-    'pontianak',
-    'manado',
-    'lampung',
-    'cirebon',
-    'sidoarjo',
-    'gresik',
-  ];
-
-  if (indonesianLocations.some((place) => text.includes(place))) {
+  // 1. Whitelist: job mentions an allowed region anywhere (location, desc, title)
+  if (ALLOWED_REGIONS.some((r) => text.includes(r.key))) {
     return true;
   }
 
-  // 2. Explicitly Remote (Worldwide / Anywhere / Work from Home)
+  // 2. Global remote: ONLY if the description explicitly mentions Indonesia
   const isRemote =
-    loc.toLowerCase().includes('remote') ||
-    loc.toLowerCase().includes('worldwide') ||
-    loc.toLowerCase().includes('anywhere') ||
-    loc.toLowerCase().includes('wfh') ||
-    loc.toLowerCase().includes('work from home') ||
-    title.toLowerCase().includes('remote') ||
-    desc.toLowerCase().includes('100% remote') ||
-    desc.toLowerCase().includes('fully remote');
+    locLower.includes('remote') ||
+    locLower.includes('worldwide') ||
+    locLower.includes('anywhere') ||
+    locLower.includes('wfh') ||
+    locLower.includes('work from home') ||
+    titleLower.includes('remote') ||
+    descLower.includes('100% remote') ||
+    descLower.includes('fully remote');
 
-  if (isRemote) {
+  if (isRemote && descLower.includes('indonesia')) {
     return true;
   }
 
-  // 3. Foreign jobs that explicitly cover visa, passport, or flight relocation
-  const hasRelocationVisa =
-    text.includes('visa sponsorship') ||
-    text.includes('visa sponsored') ||
-    text.includes('relocation package') ||
-    text.includes('relocation assistance') ||
-    text.includes('relocation covered') ||
-    text.includes('flight covered') ||
-    text.includes('tiket pesawat ditanggung') ||
-    text.includes('biaya visa ditanggung') ||
-    text.includes('paspor ditanggung') ||
-    text.includes('akomodasi ditanggung');
-
-  if (hasRelocationVisa) {
-    return true;
-  }
-
-  // Reject foreign onsite jobs without remote/visa sponsorship
+  // Everything else is rejected
   return false;
+}
+
+// Detect which whitelisted region a job belongs to (for regionTag)
+function detectRegion(loc: string, desc: string, title: string): string | undefined {
+  const text = `${loc} ${desc} ${title}`.toLowerCase();
+  const hit = ALLOWED_REGIONS.find((r) => text.includes(r.key));
+  if (hit) return hit.label;
+  if (text.includes('remote') && text.includes('indonesia')) return 'Remote Indonesia';
+  return undefined;
+}
+
+// Defensive fetch with timeout — returns null on any failure
+async function fetchJson(url: string, timeoutMs = 15000): Promise<any | null> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; KirimKerja/1.0)' },
+      signal: ctrl.signal,
+      next: { revalidate: 600 },
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function matchesQuery(query: string, ...fields: string[]): boolean {
+  if (!query) return true;
+  const q = query.toLowerCase();
+  return fields.some((f) => (f || '').toLowerCase().includes(q));
+}
+
+function makeId(prefix: string): string {
+  return prefix + Math.random().toString(36).substring(2, 9);
+}
+
+function extractEmail(text: string): string | undefined {
+  const m = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+  return m ? m[0] : undefined;
 }
 
 // Rich Real Indonesian Jobs Feed across multiple industries
@@ -226,6 +256,245 @@ const INDONESIAN_LOCAL_JOBS: Array<{
   },
 ];
 
+const MAX_JOBS = 40;
+
+// --- Source 1: curated local list (existing) ---
+function sourceLocalJobs(query: string, location: string): JobPost[] {
+  const jobs: JobPost[] = [];
+  for (const item of INDONESIAN_LOCAL_JOBS) {
+    if (isBannedSource(item.sourceUrl) || isBannedSource(item.description)) continue;
+    if (!matchesQuery(query, item.title, item.description, item.category, item.company, item.location)) continue;
+    if (location && !item.location.toLowerCase().includes(location)) continue;
+    if (!isValidJobLocation(item.location, item.description, item.title)) continue;
+
+    jobs.push({
+      id: makeId('job_loc_'),
+      sourceUrl: item.sourceUrl,
+      title: item.title,
+      company: item.company,
+      location: item.location,
+      description: item.description,
+      applyType: item.applyType,
+      contactEmail: item.contactEmail,
+      applyUrl: item.sourceUrl,
+      extractionStatus: 'berhasil',
+      confidenceLabel: item.badge || 'Region Indonesia',
+      regionTag: detectRegion(item.location, item.description, item.title),
+      fetchedAt: new Date().toISOString(),
+    });
+  }
+  return jobs;
+}
+
+// --- Source 2: Remotive (remote jobs API, no key) ---
+async function sourceRemotive(query: string, location: string): Promise<JobPost[]> {
+  const jobs: JobPost[] = [];
+  const url = query
+    ? `https://remotive.com/api/remote-jobs?search=${encodeURIComponent(query)}&limit=25`
+    : 'https://remotive.com/api/remote-jobs?limit=25';
+  const json = await fetchJson(url);
+  if (!json) return jobs;
+
+  for (const item of json.jobs || []) {
+    const title = item.title || 'Lowongan Remote';
+    const company = item.company_name || 'Global Enterprise';
+    const loc = item.candidate_required_location || 'Remote (Worldwide)';
+    const desc = stripHtml(item.description || '').slice(0, 1000);
+    const jobUrl = item.url || '';
+
+    if (isBannedSource(jobUrl) || isBannedSource(desc) || isBannedSource(company)) continue;
+    if (!isValidJobLocation(loc, desc, title)) continue;
+    if (!matchesQuery(query, title, desc, loc, company)) continue;
+    if (location && !loc.toLowerCase().includes(location)) continue;
+
+    const email = extractEmail(desc);
+    jobs.push({
+      id: makeId('job_rem_'),
+      sourceUrl: jobUrl,
+      title,
+      company,
+      location: loc.toLowerCase().includes('worldwide') ? 'Remote (Bisa dari Indonesia)' : loc,
+      description: desc,
+      applyType: email ? 'email' : 'form',
+      contactEmail: email || `karir@${company.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
+      applyUrl: jobUrl,
+      extractionStatus: 'berhasil',
+      confidenceLabel: 'Remotive • Remote',
+      regionTag: detectRegion(loc, desc, title),
+      fetchedAt: new Date().toISOString(),
+    });
+    if (jobs.length >= 12) break;
+  }
+  return jobs;
+}
+
+// --- Source 3: Arbeitnow (free job board API, no key) ---
+async function sourceArbeitnow(query: string, location: string): Promise<JobPost[]> {
+  const jobs: JobPost[] = [];
+  const json = await fetchJson('https://www.arbeitnow.com/api/job-board-api');
+  if (!json || !Array.isArray(json.data)) return jobs;
+
+  for (const item of json.data.slice(0, 80)) {
+    const title = item.title || 'Lowongan';
+    const company = item.company_name || 'Perusahaan';
+    const loc = item.remote ? 'Remote' : item.location || 'Remote';
+    const desc = stripHtml(item.description || '').slice(0, 1000);
+    const jobUrl = item.url || '';
+
+    if (isBannedSource(jobUrl) || isBannedSource(desc) || isBannedSource(company)) continue;
+    if (!isValidJobLocation(loc, desc, title)) continue;
+    if (!matchesQuery(query, title, desc, loc, company)) continue;
+    if (location && !loc.toLowerCase().includes(location)) continue;
+
+    const email = extractEmail(desc);
+    jobs.push({
+      id: makeId('job_arn_'),
+      sourceUrl: jobUrl,
+      title,
+      company,
+      location: item.remote ? 'Remote' : loc,
+      description: desc,
+      applyType: email ? 'email' : 'form',
+      contactEmail: email,
+      applyUrl: jobUrl,
+      extractionStatus: 'berhasil',
+      confidenceLabel: 'Arbeitnow',
+      regionTag: detectRegion(loc, desc, title),
+      fetchedAt: new Date().toISOString(),
+    });
+    if (jobs.length >= 10) break;
+  }
+  return jobs;
+}
+
+// --- Source 4: RemoteOK (free API, no key; credit required by their ToS) ---
+async function sourceRemoteOK(query: string, location: string): Promise<JobPost[]> {
+  const jobs: JobPost[] = [];
+  const json = await fetchJson('https://remoteok.com/api');
+  if (!Array.isArray(json)) return jobs;
+
+  // First element is the API legal notice, skip it
+  for (const item of json.slice(1, 60)) {
+    const title = item.position || 'Lowongan Remote';
+    const company = item.company || 'Perusahaan Remote';
+    const loc = item.location || 'Remote';
+    const desc = stripHtml(item.description || '').slice(0, 1000);
+    const jobUrl = item.url || (item.id ? `https://remoteok.com/remote-jobs/${item.id}` : '');
+
+    if (isBannedSource(jobUrl) || isBannedSource(desc) || isBannedSource(company)) continue;
+    if (!isValidJobLocation(loc, desc, title)) continue;
+    if (!matchesQuery(query, title, desc, loc, company, (item.tags || []).join(' '))) continue;
+    if (location && !loc.toLowerCase().includes(location)) continue;
+
+    const email = extractEmail(desc);
+    jobs.push({
+      id: makeId('job_rok_'),
+      sourceUrl: jobUrl,
+      title,
+      company,
+      location: loc,
+      description: desc,
+      applyType: email ? 'email' : 'form',
+      contactEmail: email,
+      applyUrl: jobUrl,
+      extractionStatus: 'berhasil',
+      confidenceLabel: 'RemoteOK • Remote',
+      regionTag: detectRegion(loc, desc, title),
+      fetchedAt: new Date().toISOString(),
+    });
+    if (jobs.length >= 10) break;
+  }
+  return jobs;
+}
+
+// --- Source 5: Jobicy (free remote jobs API, no key) ---
+async function sourceJobicy(query: string, location: string): Promise<JobPost[]> {
+  const jobs: JobPost[] = [];
+  const json = await fetchJson('https://jobicy.com/api/v2/remote-jobs?count=50');
+  if (!json || !Array.isArray(json.jobs)) return jobs;
+
+  for (const item of json.jobs) {
+    const title = item.jobTitle || 'Lowongan Remote';
+    const company = item.companyName || 'Perusahaan Remote';
+    const loc = Array.isArray(item.jobGeo) ? item.jobGeo.join(', ') : item.jobGeo || 'Remote';
+    const desc = stripHtml(`${item.jobExcerpt || ''} ${item.jobDescription || ''}`).slice(0, 1000);
+    const jobUrl = item.url || '';
+
+    if (isBannedSource(jobUrl) || isBannedSource(desc) || isBannedSource(company)) continue;
+    if (!isValidJobLocation(loc, desc, title)) continue;
+    if (!matchesQuery(query, title, desc, loc, company)) continue;
+    if (location && !loc.toLowerCase().includes(location)) continue;
+
+    const email = extractEmail(desc);
+    jobs.push({
+      id: makeId('job_jcy_'),
+      sourceUrl: jobUrl,
+      title,
+      company,
+      location: loc,
+      description: desc,
+      applyType: email ? 'email' : 'form',
+      contactEmail: email,
+      applyUrl: jobUrl,
+      extractionStatus: 'berhasil',
+      confidenceLabel: 'Jobicy • Remote',
+      regionTag: detectRegion(loc, desc, title),
+      fetchedAt: new Date().toISOString(),
+    });
+    if (jobs.length >= 10) break;
+  }
+  return jobs;
+}
+
+// --- Source 6: Adzuna Indonesia (needs free API key via env; skipped silently if unset) ---
+async function sourceAdzuna(query: string, location: string): Promise<JobPost[]> {
+  const jobs: JobPost[] = [];
+  const appId = process.env.ADZUNA_APP_ID;
+  const appKey = process.env.ADZUNA_APP_KEY;
+  if (!appId || !appKey) return jobs;
+
+  const params = new URLSearchParams({
+    app_id: appId,
+    app_key: appKey,
+    results_per_page: '20',
+    'content-type': 'application/json',
+  });
+  if (query) params.set('what', query);
+  // Default to Jakarta when no location filter — Adzuna 'id' = Indonesia
+  params.set('where', location || 'jakarta');
+
+  const json = await fetchJson(`https://api.adzuna.com/v1/api/jobs/id/search/1?${params.toString()}`);
+  if (!json || !Array.isArray(json.results)) return jobs;
+
+  for (const item of json.results) {
+    const title = item.title || 'Lowongan';
+    const company = item.company?.display_name || 'Perusahaan';
+    const loc = item.location?.display_name || 'Indonesia';
+    const desc = stripHtml(item.description || '').slice(0, 1000);
+    const jobUrl = item.redirect_url || '';
+
+    if (isBannedSource(jobUrl) || isBannedSource(desc) || isBannedSource(company)) continue;
+    if (!isValidJobLocation(loc, desc, title)) continue;
+
+    jobs.push({
+      id: makeId('job_adz_'),
+      sourceUrl: jobUrl,
+      title,
+      company,
+      location: loc,
+      description: desc,
+      applyType: 'form',
+      applyUrl: jobUrl,
+      extractionStatus: 'berhasil',
+      confidenceLabel: 'Adzuna Indonesia',
+      regionTag: detectRegion(loc, desc, title),
+      fetchedAt: new Date().toISOString(),
+    });
+    if (jobs.length >= 15) break;
+  }
+  return jobs;
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -234,121 +503,36 @@ export async function GET(req: NextRequest) {
 
     const jobs: JobPost[] = [];
 
-    // 1. Process Local Indonesian & Pre-vetted Sponsored/Remote Jobs
-    for (const item of INDONESIAN_LOCAL_JOBS) {
-      if (isBannedSource(item.sourceUrl) || isBannedSource(item.description)) {
-        continue;
-      }
-
-      // Check query match (title, desc, category, company, or city/location)
-      if (
-        query &&
-        !item.title.toLowerCase().includes(query) &&
-        !item.description.toLowerCase().includes(query) &&
-        !item.category.toLowerCase().includes(query) &&
-        !item.company.toLowerCase().includes(query) &&
-        !item.location.toLowerCase().includes(query)
-      ) {
-        continue;
-      }
-
-      // Check location match
-      if (location && !item.location.toLowerCase().includes(location)) {
-        continue;
-      }
-
-      // Verify location rule
-      if (!isValidJobLocation(item.location, item.description, item.title)) {
-        continue;
-      }
-
-      jobs.push({
-        id: 'job_loc_' + Math.random().toString(36).substring(2, 9),
-        sourceUrl: item.sourceUrl,
-        title: item.title,
-        company: item.company,
-        location: item.location,
-        description: item.description,
-        applyType: item.applyType,
-        contactEmail: item.contactEmail,
-        applyUrl: item.sourceUrl,
-        extractionStatus: 'berhasil',
-        confidenceLabel: item.badge || 'Region Indonesia',
-        fetchedAt: new Date().toISOString(),
-      });
+    // 1. Curated local list (synchronous)
+    try {
+      jobs.push(...sourceLocalJobs(query, location));
+    } catch (e) {
+      console.error('sourceLocalJobs failed:', e);
     }
 
-    // 2. Fetch live Remotive API, but ONLY keep jobs that are explicitly Remote or mention Indonesia
-    try {
-      const remotiveUrl = query
-        ? `https://remotive.com/api/remote-jobs?search=${encodeURIComponent(query)}&limit=25`
-        : 'https://remotive.com/api/remote-jobs?limit=25';
+    // 2-6. Live sources — each isolated so one failure can't break the rest
+    const liveSources: Array<() => Promise<JobPost[]>> = [
+      () => sourceRemotive(query, location),
+      () => sourceArbeitnow(query, location),
+      () => sourceRemoteOK(query, location),
+      () => sourceJobicy(query, location),
+      () => sourceAdzuna(query, location),
+    ];
 
-      const res = await fetch(remotiveUrl, {
-        headers: { 'User-Agent': 'Mozilla/5.0' },
-        next: { revalidate: 300 },
-      });
-
-      if (res.ok) {
-        const json = await res.json();
-        const rawJobs = json.jobs || [];
-        for (const item of rawJobs) {
-          const title = item.title || 'Lowongan Remote';
-          const company = item.company_name || 'Global Enterprise';
-          const loc = item.candidate_required_location || 'Remote (Worldwide)';
-          const desc = (item.description || '').replace(/<[^>]+>/g, ' ').slice(0, 1000);
-          const url = item.url || '';
-
-          if (isBannedSource(url) || isBannedSource(desc)) continue;
-
-          // STRICT LOCATION CHECK: Must be Indonesia, Remote, or have full Visa/Relocation covered!
-          if (!isValidJobLocation(loc, desc, title)) {
-            continue;
-          }
-
-          if (
-            query &&
-            !title.toLowerCase().includes(query) &&
-            !desc.toLowerCase().includes(query) &&
-            !loc.toLowerCase().includes(query) &&
-            !company.toLowerCase().includes(query)
-          ) {
-            continue;
-          }
-          if (location && !loc.toLowerCase().includes(location)) {
-            continue;
-          }
-
-          const emailMatch = desc.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-
-          jobs.push({
-            id: 'job_rem_' + Math.random().toString(36).substring(2, 9),
-            sourceUrl: url,
-            title,
-            company,
-            location: loc.toLowerCase().includes('worldwide') ? 'Remote (Bisa dari Indonesia)' : loc,
-            description: desc,
-            applyType: emailMatch ? 'email' : 'form',
-            contactEmail: emailMatch
-              ? emailMatch[0]
-              : `karir@${company.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
-            applyUrl: url,
-            extractionStatus: 'berhasil',
-            confidenceLabel: 'Remote Terbuka',
-            fetchedAt: new Date().toISOString(),
-          });
-
-          if (jobs.length >= 25) break;
-        }
+    for (const fetchSource of liveSources) {
+      try {
+        const result = await fetchSource();
+        jobs.push(...result);
+      } catch (e) {
+        console.error('Live job source failed:', e);
       }
-    } catch (e) {
-      console.error('Error fetching live remote jobs:', e);
+      if (jobs.length >= MAX_JOBS) break;
     }
 
     return NextResponse.json({
       success: true,
-      total: jobs.length,
-      jobs,
+      total: jobs.slice(0, MAX_JOBS).length,
+      jobs: jobs.slice(0, MAX_JOBS),
     });
   } catch (error) {
     console.error('Explore jobs error:', error);
