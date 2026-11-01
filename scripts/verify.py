@@ -24,7 +24,8 @@ def check_ssrf_logic(host: str) -> bool:
     return False
 
 def check_glint_exclusion(url: str) -> bool:
-    return "glints.com" in url.lower() or "glint" in url.lower()
+    u = url.lower()
+    return "glints.com" in u or "glint" in u or "kitalulus.com" in u or "kitalulus" in u
 
 def main():
     print("Running verification checks...")

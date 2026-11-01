@@ -49,7 +49,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span>Kendali Penuh Pelamar</span>
           </div>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            Selamat datang, {profile.fullName}
+            Selamat datang, {profile.fullName || 'Pencari Kerja'}
           </h2>
           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1 max-w-xl">
             Sistem membantu menyelaraskan CV dan surat lamaran berdasarkan lowongan. Setiap lamaran wajib kamu periksa dan setujui sebelum dikirim.

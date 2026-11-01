@@ -19,7 +19,7 @@ interface JobIngestModalProps {
   isOpen: boolean;
   onClose: () => void;
   profile: UserProfile;
-  primaryCv: DocumentItem;
+  primaryCv?: DocumentItem;
   onJobCreated: (job: JobPost, coverLetter: string, subject: string, adaptedSections: any[], claims: any[]) => void;
 }
 
@@ -115,7 +115,19 @@ export const JobIngestModal: React.FC<JobIngestModalProps> = ({
     };
 
     // Run AI Personalization & Grounding Guard
-    const pResult = AiPersonalizationService.personalize(profile, primaryCv, finalJob);
+    const cvDoc = primaryCv || {
+      id: '',
+      displayName: 'CV_Pelamar.pdf',
+      label: 'CV' as const,
+      kind: 'upload' as const,
+      status: 'siap' as const,
+      sizeBytes: 0,
+      pageCount: 1,
+      isPrimary: false,
+      createdAt: new Date().toISOString(),
+      extractedText: '',
+    };
+    const pResult = AiPersonalizationService.personalize(profile, cvDoc, finalJob);
 
     onJobCreated(
       finalJob,

@@ -85,10 +85,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Excluded sources rule (AFD 7: Glint dikecualikan)
-    if (cleanUrl.toLowerCase().includes('glints.com') || cleanUrl.toLowerCase().includes('glint')) {
+    // Excluded sources rule (AFD 7: Glint & KitaLulus diblokir)
+    const lowerUrl = cleanUrl.toLowerCase();
+    if (
+      lowerUrl.includes('glints.com') ||
+      lowerUrl.includes('glint') ||
+      lowerUrl.includes('kitalulus.com') ||
+      lowerUrl.includes('kitalulus')
+    ) {
       return NextResponse.json(
-        { error: 'Sumber ini belum didukung.' },
+        { error: 'Sumber ini tidak didukung dan telah diblokir dari sistem.' },
         { status: 400 }
       );
     }

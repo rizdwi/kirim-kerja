@@ -19,7 +19,6 @@ interface SettingsViewProps {
   emailSettings: EmailSettings;
   onSaveProfile: (profile: UserProfile) => void;
   onSaveEmailSettings: (settings: EmailSettings) => void;
-  onResetSampleData: () => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -27,7 +26,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   emailSettings,
   onSaveProfile,
   onSaveEmailSettings,
-  onResetSampleData,
 }) => {
   const [fullName, setFullName] = useState(profile.fullName);
   const [phone, setPhone] = useState(profile.phone);
@@ -243,15 +241,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           >
             <Download size={15} />
             <span>Unduh Seluruh Data Saya (JSON)</span>
-          </button>
-
-          <button
-            onClick={onResetSampleData}
-            className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs font-semibold px-4 py-2.5 rounded-lg transition-colors min-h-[44px]"
-            title="Muat ulang data contoh pengujian"
-          >
-            <RefreshCw size={14} />
-            <span>Reset ke Data Contoh Demo</span>
           </button>
 
           <button

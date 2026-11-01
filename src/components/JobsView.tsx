@@ -17,7 +17,7 @@ import { AiPersonalizationService } from '@/lib/ai-service';
 interface JobsViewProps {
   jobs: JobPost[];
   profile: UserProfile;
-  primaryCv: DocumentItem;
+  primaryCv?: DocumentItem;
   onOpenAddJob: () => void;
   onDeleteJob: (jobId: string) => void;
   onCreateApplication: (
@@ -38,7 +38,19 @@ export const JobsView: React.FC<JobsViewProps> = ({
   onCreateApplication,
 }) => {
   const handleGenerateApp = (job: JobPost) => {
-    const pResult = AiPersonalizationService.personalize(profile, primaryCv, job);
+    const cvDoc = primaryCv || {
+      id: '',
+      displayName: 'CV_Pelamar.pdf',
+      label: 'CV' as const,
+      kind: 'upload' as const,
+      status: 'siap' as const,
+      sizeBytes: 0,
+      pageCount: 1,
+      isPrimary: false,
+      createdAt: new Date().toISOString(),
+      extractedText: '',
+    };
+    const pResult = AiPersonalizationService.personalize(profile, cvDoc, job);
     onCreateApplication(
       job,
       pResult.coverLetter,

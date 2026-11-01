@@ -57,10 +57,10 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* User initials */}
         <div
-          title={profile.fullName}
+          title={profile.fullName || 'Profil Pelamar'}
           className="w-9 h-9 rounded-full bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 flex items-center justify-center font-bold text-sm border border-brand-200 dark:border-brand-700 shrink-0 select-none"
         >
-          {profile.fullName.slice(0, 2).toUpperCase()}
+          {profile.fullName ? profile.fullName.slice(0, 2).toUpperCase() : 'KK'}
         </div>
       </div>
     </header>

@@ -73,18 +73,7 @@ export default function Home() {
   };
 
   // Primary CV
-  const primaryCv = documents.find((d) => d.isPrimary) || documents[0] || {
-    id: 'doc_default',
-    displayName: 'CV_Utama.pdf',
-    label: 'CV',
-    kind: 'upload',
-    status: 'siap',
-    sizeBytes: 300000,
-    pageCount: 1,
-    isPrimary: true,
-    createdAt: new Date().toISOString(),
-    extractedText: 'Data CV Pelamar',
-  };
+  const primaryCv = documents.find((d) => d.isPrimary) || documents[0];
 
   // Handlers for Applications
   const handleApproveAndSend = async (
@@ -94,7 +83,9 @@ export default function Home() {
     coverLetter: string,
     attachmentDocId: string
   ) => {
-    const selectedDoc = documents.find((d) => d.id === attachmentDocId) || primaryCv;
+    const selectedDoc = documents.find((d) => d.id === attachmentDocId) || primaryCv || {
+      displayName: 'CV.pdf',
+    };
 
     // Call serverless API
     const res = await fetch('/api/send-email', {
@@ -249,15 +240,6 @@ export default function Home() {
     setEmailSettings(s);
   };
 
-  const handleResetSampleData = () => {
-    StorageService.resetSampleData();
-    setProfile(StorageService.getProfile());
-    setDocuments(StorageService.getDocuments());
-    setJobs(StorageService.getJobs());
-    setApplications(StorageService.getApplications());
-    setEmailSettings(StorageService.getEmailSettings());
-  };
-
   if (!isLoaded) {
     return (
       <div className="min-h-screen bg-surface-1 dark:bg-[#0D1117] flex items-center justify-center p-4">
@@ -401,7 +383,6 @@ export default function Home() {
               emailSettings={emailSettings}
               onSaveProfile={handleSaveProfile}
               onSaveEmailSettings={handleSaveEmailSettings}
-              onResetSampleData={handleResetSampleData}
             />
           )}
         </main>

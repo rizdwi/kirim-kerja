@@ -30,12 +30,33 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
   const [selectedDocText, setSelectedDocText] = useState<DocumentItem | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  const handleSimulatedUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
-    setTimeout(() => {
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+      let extracted = '';
+      const rawContent = event.target?.result;
+      if (typeof rawContent === 'string') {
+        extracted = rawContent.slice(0, 10000);
+      } else if (rawContent instanceof ArrayBuffer) {
+        const bytes = new Uint8Array(rawContent);
+        let textChunk = '';
+        for (let i = 0; i < Math.min(bytes.length, 50000); i++) {
+          const charCode = bytes[i];
+          if ((charCode >= 32 && charCode <= 126) || charCode === 10 || charCode === 13) {
+            textChunk += String.fromCharCode(charCode);
+          }
+        }
+        extracted = textChunk.replace(/\s+/g, ' ').slice(0, 4000);
+        if (!extracted || extracted.length < 50) {
+          extracted = `Dokumen: ${file.name}\nUkuran: ${Math.round(file.size / 1024)} KB\nTipe: ${file.type || 'Dokumen Pelamar'}`;
+        }
+      }
+
       const newDoc: DocumentItem = {
         id: 'doc_' + Date.now(),
         displayName: file.name,
@@ -43,18 +64,30 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
           ? 'CV'
           : file.name.toLowerCase().includes('sertifikat')
           ? 'Sertifikat'
-          : 'Transkrip',
+          : file.name.toLowerCase().includes('transkrip')
+          ? 'Transkrip'
+          : 'CV',
         kind: 'upload',
         status: 'siap',
-        sizeBytes: file.size || 350000,
+        sizeBytes: file.size,
         pageCount: 1,
         isPrimary: documents.length === 0,
         createdAt: new Date().toISOString(),
-        extractedText: `Nama Berkas: ${file.name}\nTeks terekstraksi dari dokumen ${file.name} untuk dasar personalisasi surat lamaran dan pencocokan keahlian teknis.`,
+        extractedText: extracted,
       };
       onUploadDocument(newDoc);
       setIsUploading(false);
-    }, 500);
+    };
+
+    reader.onerror = () => {
+      setIsUploading(false);
+    };
+
+    if (file.type.includes('text') || file.name.endsWith('.txt') || file.name.endsWith('.md')) {
+      reader.readAsText(file);
+    } else {
+      reader.readAsArrayBuffer(file);
+    }
   };
 
   return (
@@ -93,7 +126,7 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
           <input
             type="file"
             accept=".pdf,.docx,.doc,image/*"
-            onChange={handleSimulatedUpload}
+            onChange={handleUpload}
             className="hidden"
           />
         </label>
@@ -105,8 +138,18 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
           Daftar Berkas Tersimpan ({documents.length})
         </h3>
 
-        <div className="grid grid-cols-1 gap-3">
-          {documents.map((doc) => (
+        {documents.length === 0 ? (
+          <div className="bg-white dark:bg-[#161B22] border border-dashed border-gray-200 dark:border-gray-800 rounded-xl p-8 text-center space-y-2">
+            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              Belum ada berkas tersimpan
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Mulai dengan mengunggah CV kamu di atas untuk dasar personalisasi lamaran.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3">
+            {documents.map((doc) => (
             <div
               key={doc.id}
               className={`bg-white dark:bg-[#161B22] border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors ${
@@ -182,6 +225,7 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
             </div>
           ))}
         </div>
+        )}
       </div>
 
       {/* Extracted Text Inspector Modal */}
