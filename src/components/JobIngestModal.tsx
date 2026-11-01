@@ -104,7 +104,7 @@ export const JobIngestModal: React.FC<JobIngestModalProps> = ({
     }
   };
 
-  const handleSaveAndGenerate = () => {
+  const handleSaveAndGenerate = async () => {
     if (!extractedJob) return;
 
     const finalJob: JobPost = {
@@ -127,20 +127,30 @@ export const JobIngestModal: React.FC<JobIngestModalProps> = ({
       createdAt: new Date().toISOString(),
       extractedText: '',
     };
-    const pResult = AiPersonalizationService.personalize(profile, cvDoc, finalJob);
 
-    onJobCreated(
-      finalJob,
-      pResult.coverLetter,
-      pResult.subject,
-      pResult.adaptedSections,
-      pResult.claims
-    );
+    setLoadingStage('Menyusun surat lamaran dengan AI…');
+    try {
+      const pResult = await AiPersonalizationService.personalize(profile, cvDoc, finalJob);
 
-    setUrlInput('');
-    setTextInput('');
-    setExtractedJob(null);
-    onClose();
+      onJobCreated(
+        finalJob,
+        pResult.coverLetter,
+        pResult.subject,
+        pResult.adaptedSections,
+        pResult.claims
+      );
+
+      setUrlInput('');
+      setTextInput('');
+      setExtractedJob(null);
+      onClose();
+    } catch (err: any) {
+      setErrorMessage(
+        'AI gagal menyusun surat: ' + (err.message || 'coba lagi beberapa saat.')
+      );
+    } finally {
+      setLoadingStage(null);
+    }
   };
 
   const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
@@ -323,12 +333,21 @@ export const JobIngestModal: React.FC<JobIngestModalProps> = ({
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-1">
-                <button onClick={() => setExtractedJob(null)} className="btn-ghost btn-sm">
+                <button onClick={() => setExtractedJob(null)} className="btn-ghost btn-sm" disabled={Boolean(loadingStage)}>
                   Ulangi
                 </button>
-                <button onClick={handleSaveAndGenerate} className="btn-primary btn-sm">
-                  <Sparkles size={14} />
-                  <span>Simpan & Buat Lamaran</span>
+                <button onClick={handleSaveAndGenerate} disabled={Boolean(loadingStage)} className="btn-primary btn-sm">
+                  {loadingStage ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>Menyusun…</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={14} />
+                      <span>Simpan & Buat Lamaran</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>

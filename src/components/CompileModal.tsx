@@ -8,7 +8,7 @@ import {
   ArrowUp,
   ArrowDown,
   Download,
-  CheckCircle,
+  CheckCircle2,
   Loader2,
 } from 'lucide-react';
 import { DocumentItem } from '@/types';
@@ -29,7 +29,7 @@ export const CompileModal: React.FC<CompileModalProps> = ({
 }) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [docOrder, setDocOrder] = useState<DocumentItem[]>([]);
-  const [compiledTitle, setCompiledTitle] = useState('Berkas_Lamaran_Terpadu_RizkyDwi');
+  const [compiledTitle, setCompiledTitle] = useState('Berkas_Lamaran_Terpadu');
   const [isCompiling, setIsCompiling] = useState(false);
   const [compileSuccess, setCompileSuccess] = useState(false);
   const [lastPdfBytes, setLastPdfBytes] = useState<Uint8Array | null>(null);
@@ -43,7 +43,6 @@ export const CompileModal: React.FC<CompileModalProps> = ({
     }
   }, [documents, isOpen]);
 
-  // Handle ESC
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -87,7 +86,6 @@ export const CompileModal: React.FC<CompileModalProps> = ({
       setLastPdfBytes(pdfBytes);
       setCompileSuccess(true);
 
-      // Save to library
       const newDoc: DocumentItem = {
         id: 'doc_comp_' + Date.now(),
         displayName: `${compiledTitle}.pdf`,
@@ -118,95 +116,84 @@ export const CompileModal: React.FC<CompileModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="compile-modal-title"
-      className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150"
+      className="modal-backdrop"
+      onClick={onClose}
     >
-      <div className="bg-white dark:bg-[#161B22] rounded-xl shadow-2xl border border-gray-200 dark:border-gray-800 w-full max-w-xl overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between bg-surface-1 dark:bg-[#0D1117]">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 flex items-center justify-center">
-              <Layers size={18} />
-            </div>
-            <div>
-              <h2
-                id="compile-modal-title"
-                className="text-base font-bold text-gray-900 dark:text-white"
-              >
-                Kompilasi Berkas Dokumen
+      <div className="modal-panel sm:!max-w-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="w-10 h-10 rounded-xl bg-gradient-to-b from-brand-500/15 to-brand-500/5 border border-brand-500/20 text-brand-500 dark:text-brand-300 flex items-center justify-center shrink-0">
+              <Layers size={19} />
+            </span>
+            <div className="min-w-0">
+              <h2 id="compile-modal-title" className="text-base font-extrabold text-gray-900 dark:text-white tracking-tight">
+                Kompilasi Berkas
               </h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Gabungkan CV, sertifikat, dan transkrip menjadi satu PDF terpadu.
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                Gabungkan CV, sertifikat & transkrip jadi satu PDF.
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
             aria-label="Tutup"
-            className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="btn-icon text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/[0.06] shrink-0"
           >
-            <X size={20} />
+            <X size={19} />
           </button>
         </div>
 
-        {/* Body */}
-        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+        <div className="modal-body space-y-4">
           <div>
-            <label
-              htmlFor="compile-filename"
-              className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1"
-            >
-              Nama Berkas Hasil Kompilasi:
-            </label>
+            <label htmlFor="compile-filename" className="label">Nama berkas hasil</label>
             <input
               id="compile-filename"
               type="text"
               value={compiledTitle}
               onChange={(e) => setCompiledTitle(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-white dark:bg-[#161B22] border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-600 min-h-[44px]"
+              className="input"
             />
           </div>
 
-          <div className="space-y-2">
-            <span className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
-              Pilih dan Atur Urutan Berkas:
-            </span>
+          <fieldset>
+            <legend className="label">Pilih & urutkan berkas</legend>
             <div className="space-y-2">
               {docOrder.map((doc, idx) => {
                 const isSelected = selectedIds.includes(doc.id);
                 return (
                   <div
                     key={doc.id}
-                    className={`flex items-center justify-between p-3 rounded-lg border text-xs transition-colors ${
+                    className={`flex items-center gap-2 p-3 rounded-xl border transition-all ${
                       isSelected
-                        ? 'bg-brand-50/50 dark:bg-brand-900/10 border-brand-200 dark:border-brand-800'
-                        : 'bg-gray-50 dark:bg-gray-900/30 border-gray-200 dark:border-gray-800 opacity-60'
+                        ? 'bg-brand-500/[0.06] dark:bg-brand-400/[0.07] border-brand-500/30 dark:border-brand-400/30'
+                        : 'card-flat opacity-55'
                     }`}
                   >
-                    <label className="flex items-center gap-3 cursor-pointer select-none flex-1">
+                    <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => handleToggleSelect(doc.id)}
-                        className="rounded text-brand-600 focus:ring-brand-600 w-4 h-4"
+                        className="rounded text-brand-600 focus:ring-brand-500 w-4 h-4 shrink-0 accent-brand-600"
+                        aria-label={`Pilih ${doc.displayName}`}
                       />
-                      <FileText size={16} className="text-gray-500 shrink-0" />
-                      <div>
-                        <span className="font-semibold text-gray-900 dark:text-white block">
+                      <FileText size={16} className="text-gray-400 shrink-0" />
+                      <span className="min-w-0">
+                        <span className="font-semibold text-xs text-gray-900 dark:text-white block truncate">
                           [{doc.label}] {doc.displayName}
                         </span>
                         <span className="text-[11px] text-gray-500 dark:text-gray-400">
-                          {Math.round(doc.sizeBytes / 1024)} KB · {doc.pageCount} halaman
+                          {Math.round(doc.sizeBytes / 1024)} KB · {doc.pageCount} hlm
                         </span>
-                      </div>
+                      </span>
                     </label>
-
-                    <div className="flex items-center gap-1 pl-2">
+                    <div className="flex items-center gap-0.5 shrink-0">
                       <button
                         disabled={idx === 0}
                         onClick={() => handleMove(idx, 'up')}
                         title="Geser ke atas"
                         aria-label={`Geser ${doc.displayName} ke atas`}
-                        className="p-1.5 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white disabled:opacity-30 rounded hover:bg-gray-200 dark:hover:bg-gray-700 min-h-[36px] min-w-[36px] flex items-center justify-center"
+                        className="btn-icon !min-h-[36px] !min-w-[36px] text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-25 hover:bg-gray-100 dark:hover:bg-white/[0.06]"
                       >
                         <ArrowUp size={14} />
                       </button>
@@ -215,7 +202,7 @@ export const CompileModal: React.FC<CompileModalProps> = ({
                         onClick={() => handleMove(idx, 'down')}
                         title="Geser ke bawah"
                         aria-label={`Geser ${doc.displayName} ke bawah`}
-                        className="p-1.5 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white disabled:opacity-30 rounded hover:bg-gray-200 dark:hover:bg-gray-700 min-h-[36px] min-w-[36px] flex items-center justify-center"
+                        className="btn-icon !min-h-[36px] !min-w-[36px] text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-25 hover:bg-gray-100 dark:hover:bg-white/[0.06]"
                       >
                         <ArrowDown size={14} />
                       </button>
@@ -224,47 +211,40 @@ export const CompileModal: React.FC<CompileModalProps> = ({
                 );
               })}
             </div>
-          </div>
+          </fieldset>
 
           {compileSuccess && (
-            <div className="p-3 bg-success-50 dark:bg-success-900/30 border border-success-200 dark:border-success-800 rounded-lg flex items-center justify-between text-xs text-success-800 dark:text-success-300">
-              <div className="flex items-center gap-2">
-                <CheckCircle size={16} className="text-success-600" />
-                <span>Dokumen PDF berhasil digabungkan dan disimpan ke pustaka.</span>
-              </div>
-              <button
-                onClick={handleDownload}
-                className="flex items-center gap-1 bg-success-600 hover:bg-success-700 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors min-h-[36px]"
-              >
+            <div role="status" className="card p-3.5 !border-success-500/40 dark:!border-success-400/30 flex items-center justify-between gap-3 animate-slide-up">
+              <p className="flex items-center gap-2 text-xs font-semibold text-success-700 dark:text-success-300">
+                <CheckCircle2 size={16} className="shrink-0" />
+                PDF tersimpan ke pustaka berkas.
+              </p>
+              <button onClick={handleDownload} className="btn btn-sm bg-success-600 hover:bg-success-700 text-white shrink-0">
                 <Download size={14} />
-                <span>Unduh PDF</span>
+                <span>Unduh</span>
               </button>
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-surface-1 dark:bg-[#0D1117] flex items-center justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg min-h-[44px]"
-          >
+        <div className="modal-footer !justify-end">
+          <button onClick={onClose} className="btn-ghost">
             Tutup
           </button>
           <button
             disabled={isCompiling || selectedIds.length === 0}
             onClick={handleExecuteCompile}
-            className="flex items-center gap-2 px-5 py-2 text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white rounded-lg transition-colors shadow-sm disabled:opacity-50 min-h-[44px]"
+            className="btn-primary"
           >
             {isCompiling ? (
               <>
-                <Loader2 size={14} className="animate-spin" />
-                <span>Menggabungkan Dokumen...</span>
+                <Loader2 size={15} className="animate-spin" />
+                <span>Menggabungkan…</span>
               </>
             ) : (
               <>
-                <Layers size={14} />
-                <span>Kompilasi Sekarang</span>
+                <Layers size={15} />
+                <span>Kompilasi ({selectedIds.length})</span>
               </>
             )}
           </button>
