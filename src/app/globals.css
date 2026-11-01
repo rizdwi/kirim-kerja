@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sans: 'Inter', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-serif: 'Source Serif 4', Georgia, Cambria, 'Times New Roman', Times, serif;
+    --bg-page: #F6F7F9;
+    --bg-surface: #FFFFFF;
+    --text-primary: #1B1F24;
+    --text-secondary: #5B6470;
+    --border-color: #E2E5E9;
+  }
+
+  .dark {
+    --bg-page: #0D1117;
+    --bg-surface: #161B22;
+    --text-primary: #F0F6FC;
+    --text-secondary: #8B949E;
+    --border-color: #30363D;
+  }
+
+  body {
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Accessibility keyboard focus indicator (R-32 & antislop-human) */
+  :focus-visible {
+    outline: 2px solid #1F5F8B;
+    outline-offset: 2px;
+  }
+
+  .dark :focus-visible {
+    outline: 2px solid #388BFD;
+    outline-offset: 2px;
+  }
+}
+
+/* Document typography specifically for cover letters (DBD 2.2) */
+.document-prose {
+  font-family: var(--font-serif);
+  line-height: 1.75;
+  font-size: 1rem;
+}
+
+/* Subtle AI highlight with left indicator bar (DBD 3.3) */
+.ai-highlight {
+  background-color: #EAF2FA;
+  border-left: 3px solid #1F5F8B;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0 4px 4px 0;
+  display: inline-block;
+  margin: 0.15rem 0;
+}
+
+.dark .ai-highlight {
+  background-color: #172B3D;
+  border-left-color: #388BFD;
+}
