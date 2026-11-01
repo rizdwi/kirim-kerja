@@ -240,13 +240,14 @@ export async function GET(req: NextRequest) {
         continue;
       }
 
-      // Check query match
+      // Check query match (title, desc, category, company, or city/location)
       if (
         query &&
         !item.title.toLowerCase().includes(query) &&
         !item.description.toLowerCase().includes(query) &&
         !item.category.toLowerCase().includes(query) &&
-        !item.company.toLowerCase().includes(query)
+        !item.company.toLowerCase().includes(query) &&
+        !item.location.toLowerCase().includes(query)
       ) {
         continue;
       }
@@ -305,7 +306,13 @@ export async function GET(req: NextRequest) {
             continue;
           }
 
-          if (query && !title.toLowerCase().includes(query) && !desc.toLowerCase().includes(query)) {
+          if (
+            query &&
+            !title.toLowerCase().includes(query) &&
+            !desc.toLowerCase().includes(query) &&
+            !loc.toLowerCase().includes(query) &&
+            !company.toLowerCase().includes(query)
+          ) {
             continue;
           }
           if (location && !loc.toLowerCase().includes(location)) {
